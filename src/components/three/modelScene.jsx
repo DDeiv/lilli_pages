@@ -126,25 +126,32 @@ export function Model({ sceneItems = [], ...props }) {
       <pointLight intensity={100} decay={2} position={[6.889, 7.597, 5.715]} rotation={[-Math.PI / 2, 0, 0]} />
 
       {/* Products from scene2.glb - Now Clickable */}
-      <mesh ref={product5Ref} geometry={nodes.peoduct_5?.geometry} material={nodes.peoduct_5?.material} position={[-0.859, 2.708, 0.496]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+      <mesh ref={product5Ref} geometry={nodes.peoduct_5?.geometry} position={[-0.859, 2.708, 0.496]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+        <meshStandardMaterial color="#0066ff" />
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
-      <mesh ref={product2Ref} geometry={nodes.product_2?.geometry} material={nodes.product_2?.material} position={[-9.187, 2.708, 0.176]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+      <mesh ref={product2Ref} geometry={nodes.product_2?.geometry} position={[-9.187, 2.708, 0.176]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+        <meshStandardMaterial color="#0066ff" />
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
-      <mesh ref={product1Ref} geometry={nodes.produc_1?.geometry} material={nodes.produc_1?.material} position={[-9.187, 4.656, 0.176]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+      <mesh ref={product1Ref} geometry={nodes.produc_1?.geometry} position={[-9.187, 4.656, 0.176]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+        <meshStandardMaterial color="#0066ff" />
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
-      <mesh ref={product3Ref} geometry={nodes.product_3?.geometry} material={nodes.product_3?.material} position={[-9.187, 0.997, 0.176]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+      <mesh ref={product3Ref} geometry={nodes.product_3?.geometry} position={[-9.187, 0.997, 0.176]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+        <meshStandardMaterial color="#0066ff" />
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
-      <mesh ref={product6Ref} geometry={nodes.product_6?.geometry} material={nodes.product_6?.material} position={[-0.914, 0.997, 0.496]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+      <mesh ref={product6Ref} geometry={nodes.product_6?.geometry} position={[-0.914, 0.997, 0.496]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+        <meshStandardMaterial color="#0066ff" />
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
-      <mesh ref={product4Ref} geometry={nodes.product_4?.geometry} material={nodes.product_4?.material} position={[-0.914, 4.734, 0.496]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+      <mesh ref={product4Ref} geometry={nodes.product_4?.geometry} position={[-0.914, 4.734, 0.496]} rotation={[0, 0, -Math.PI]} scale={[-0.313, 0.583, 8.403]}>
+        <meshStandardMaterial color="#0066ff" />
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
-      <mesh geometry={nodes.Cube016?.geometry} material={nodes.Cube016?.material} position={[-6.502, 0.783, 21.541]} scale={[0.989, 1, 3.027]}>
+      <mesh geometry={nodes.Cube016?.geometry} position={[-6.502, 0.783, 21.541]} scale={[0.989, 1, 3.027]}>
+        <meshStandardMaterial color="#0066ff" />
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
 
@@ -182,63 +189,81 @@ export function Model({ sceneItems = [], ...props }) {
       />
 
       {/* Shelves from scene2.glb */}
-      <mesh geometry={nodes.Cube?.geometry} material={nodes.Cube?.material} position={[-10.433, 3, 0]} rotation={[-Math.PI, 0, -Math.PI]} scale={[0.5, 3, 12]}>
-        <mesh geometry={nodes.Cube002?.geometry} material={nodes.Cube002?.material} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
+      <mesh geometry={nodes.Cube?.geometry} position={[-10.433, 3, 0]} rotation={[-Math.PI, 0, -Math.PI]} scale={[0.5, 3, 12]}>
+        <meshStandardMaterial color="#0066ff" />
+        <mesh geometry={nodes.Cube002?.geometry} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
           <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
         </mesh>
-        <mesh geometry={nodes.Cube003?.geometry} material={nodes.Cube003?.material} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
+        <mesh geometry={nodes.Cube003?.geometry} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
           <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
         </mesh>
-        <mesh geometry={nodes.Cube004?.geometry} material={nodes.Cube004?.material} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
-          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
-        </mesh>
-        <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
-      </mesh>
-
-      <mesh geometry={nodes.Cube007?.geometry} material={nodes.Cube007?.material} position={[0.5, 3, 0]} scale={[0.5, 3, 12]}>
-        <mesh geometry={nodes.Cube001?.geometry} material={nodes.Cube001?.material} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
-          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
-        </mesh>
-        <mesh geometry={nodes.Cube005?.geometry} material={nodes.Cube005?.material} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
-          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
-        </mesh>
-        <mesh geometry={nodes.Cube006?.geometry} material={nodes.Cube006?.material} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
+        <mesh geometry={nodes.Cube004?.geometry} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
           <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
         </mesh>
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
 
-      <mesh geometry={nodes.Cube008?.geometry} material={nodes.Cube008?.material} position={[12.416, 3, 0]} scale={[0.5, 3, 12]}>
-        <mesh geometry={nodes.Cube009?.geometry} material={nodes.Cube009?.material} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
+      <mesh geometry={nodes.Cube007?.geometry} position={[0.5, 3, 0]} scale={[0.5, 3, 12]}>
+        <meshStandardMaterial color="#0066ff" />
+        <mesh geometry={nodes.Cube001?.geometry} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
           <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
         </mesh>
-        <mesh geometry={nodes.Cube010?.geometry} material={nodes.Cube010?.material} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
+        <mesh geometry={nodes.Cube005?.geometry} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
           <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
         </mesh>
-        <mesh geometry={nodes.Cube014?.geometry} material={nodes.Cube014?.material} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
-          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
-        </mesh>
-        <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
-      </mesh>
-
-      <mesh geometry={nodes.Cube015?.geometry} material={nodes.Cube015?.material} position={[1.483, 3, 0]} rotation={[-Math.PI, 0, -Math.PI]} scale={[0.5, 3, 12]}>
-        <mesh geometry={nodes.Cube011?.geometry} material={nodes.Cube011?.material} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
-          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
-        </mesh>
-        <mesh geometry={nodes.Cube012?.geometry} material={nodes.Cube012?.material} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
-          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
-        </mesh>
-        <mesh geometry={nodes.Cube013?.geometry} material={nodes.Cube013?.material} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
+        <mesh geometry={nodes.Cube006?.geometry} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
           <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
         </mesh>
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
 
-      <mesh geometry={nodes.Cube021?.geometry} material={nodes.Cube021?.material} position={[-9.233, 4, 0]} rotation={[-Math.PI, 0, -Math.PI]} scale={[0.7, 0.1, 12]}>
+      <mesh geometry={nodes.Cube008?.geometry} position={[12.416, 3, 0]} scale={[0.5, 3, 12]}>
+        <meshStandardMaterial color="#0066ff" />
+        <mesh geometry={nodes.Cube009?.geometry} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
+          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
+        </mesh>
+        <mesh geometry={nodes.Cube010?.geometry} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
+          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
+        </mesh>
+        <mesh geometry={nodes.Cube014?.geometry} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
+          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
+        </mesh>
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
 
-      <mesh geometry={nodes.Cube025?.geometry} material={nodes.Cube025?.material} position={[-8.937, 2.138, 21.609]} rotation={[0, 0, -Math.PI]} scale={[-0.529, 2.226, 0.679]}>
+      <mesh geometry={nodes.Cube015?.geometry} position={[1.483, 3, 0]} rotation={[-Math.PI, 0, -Math.PI]} scale={[0.5, 3, 12]}>
+        <meshStandardMaterial color="#0066ff" />
+        <mesh geometry={nodes.Cube011?.geometry} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
+          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
+        </mesh>
+        <mesh geometry={nodes.Cube012?.geometry} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
+          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
+        </mesh>
+        <mesh geometry={nodes.Cube013?.geometry} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
+          <meshStandardMaterial color="#0066ff" />
+          <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
+        </mesh>
+        <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
+      </mesh>
+
+      <mesh geometry={nodes.Cube021?.geometry} position={[-9.233, 4, 0]} rotation={[-Math.PI, 0, -Math.PI]} scale={[0.7, 0.1, 12]}>
+        <meshStandardMaterial color="#0066ff" />
+        <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
+      </mesh>
+
+      <mesh geometry={nodes.Cube025?.geometry} position={[-8.937, 2.138, 21.609]} rotation={[0, 0, -Math.PI]} scale={[-0.529, 2.226, 0.679]}>
+        <meshStandardMaterial color="#0066ff" />
         <Edges lineWidth={1} scale={1.0} threshold={15} color="black" />
       </mesh>
     </group>
