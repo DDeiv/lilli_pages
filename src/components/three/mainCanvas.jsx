@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from "react";
-import { Environment, ScrollControls} from "@react-three/drei";
+import { Environment } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Model } from "./modelScene";
 import { CameraFPS } from "./cameraControlFPS";
@@ -22,14 +22,12 @@ export function MainCanvas({ sceneItems = [] }) {
         <div className="w-screen h-screen fixed top-0 left-0">
             <Canvas shadows dpr={[1,2]} camera={{ fov:55, position: [0,3,10] }}>
                 <Environment files="/images/path.jpg" />
-                <ScrollControls pages={1}>
-                    {/* Unified scene with cashier and shelves */}
-                    <Model sceneItems={sceneItems} />
+                {/* Unified scene with cashier and shelves */}
+                <Model sceneItems={sceneItems} />
 
-                    {/* Camera controls */}
-                    {mounted && (isMobile ? <MobileShelfView /> : <CameraFPS/>)}
-                    {!mounted && <CameraFPS/>}
-                </ScrollControls>
+                {/* Camera controls - now with custom scroll handling */}
+                {mounted && (isMobile ? <MobileShelfView /> : <CameraFPS/>)}
+                {!mounted && <CameraFPS/>}
             </Canvas>
             {/* Scroll blocking overlay - prevents scroll during dialogue */}
             <ScrollBlockOverlay />
