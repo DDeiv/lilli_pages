@@ -1,0 +1,27 @@
+{
+  "name": "lilli_prova",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.3.0",
+    "@sanity/client": "^7.12.1",
+    "@sanity/image-url": "^1.2.0",
+    "gsap": "^3.13.0",
+    "next": "15.5.3",
+    "next-sanity": "^11.6.6",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "three": "^0.180.0",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4"
+  }
+}
