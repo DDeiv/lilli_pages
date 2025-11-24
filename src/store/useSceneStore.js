@@ -21,12 +21,14 @@ export const useSceneStore = create(
       showScrollBlock: false,
       setShowScrollBlock: (show) => set({ showScrollBlock: show }),
 
-      // Camera position and rotation (for restoring state when returning from portfolio)
+      // Camera position, rotation, and scroll offset (for restoring state when returning from portfolio)
       cameraPosition: null,
       cameraRotation: null,
-      setCameraState: (position, rotation) => set({
+      scrollOffset: null,
+      setCameraState: (position, rotation, scrollOffset) => set({
         cameraPosition: position,
         cameraRotation: rotation,
+        scrollOffset: scrollOffset,
       }),
 
       // Reset all state (useful for testing or "back" button)
@@ -36,6 +38,7 @@ export const useSceneStore = create(
         showScrollBlock: false,
         cameraPosition: null,
         cameraRotation: null,
+        scrollOffset: null,
       }),
     }),
     {
@@ -45,6 +48,7 @@ export const useSceneStore = create(
       partialize: (state) => ({
         cameraPosition: state.cameraPosition,
         cameraRotation: state.cameraRotation,
+        scrollOffset: state.scrollOffset,
       }),
       // Migrate or clear old data
       migrate: (persistedState, version) => {
@@ -53,6 +57,7 @@ export const useSceneStore = create(
           return {
             cameraPosition: null,
             cameraRotation: null,
+            scrollOffset: null,
           };
         }
         return persistedState;

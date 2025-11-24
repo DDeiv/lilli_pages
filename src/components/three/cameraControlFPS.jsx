@@ -5,7 +5,7 @@ import { useRef, useEffect } from "react";
 import { useSceneStore } from "@/store/useSceneStore";
 import gsap from "gsap";
 
-export function CameraFPS() {
+export function CameraFPS({ active = true }) {
   const { camera, gl } = useThree();
   const cameraLocked = useRef(false);
   const storeCameraLocked = useSceneStore((state) => state.cameraLocked);
@@ -13,6 +13,7 @@ export function CameraFPS() {
   const setCameraState = useSceneStore((state) => state.setCameraState);
   const savedCameraPosition = useSceneStore((state) => state.cameraPosition);
   const savedCameraRotation = useSceneStore((state) => state.cameraRotation);
+  const savedScrollOffset = useSceneStore((state) => state.scrollOffset);
   const showDialogue = useSceneStore((state) => state.showDialogue);
   const setShowDialogue = useSceneStore((state) => state.setShowDialogue);
   const setShowScrollBlock = useSceneStore((state) => state.setShowScrollBlock);
@@ -54,8 +55,8 @@ export function CameraFPS() {
   // Custom scroll wheel handler
   useEffect(() => {
     const onWheel = (e) => {
-      // Don't scroll if frozen or camera is locked
-      if (scrollFrozen.current || cameraLocked.current || storeCameraLocked) {
+      // Don't scroll if frozen or camera is locked or NOT ACTIVE
+      if (scrollFrozen.current || cameraLocked.current || storeCameraLocked || !active) {
         return;
       }
 
@@ -67,14 +68,40 @@ export function CameraFPS() {
 
     window.addEventListener('wheel', onWheel, { passive: true });
     return () => window.removeEventListener('wheel', onWheel);
-  }, [storeCameraLocked]);
+  }, [storeCameraLocked, active]);
 
   // Initial setup
   useEffect(() => {
+    if (!active) return;
     if (hasRestoredOnce.current) return;
     hasRestoredOnce.current = true;
 
-    const isReturningFromPortfolio = savedCameraPosition && savedCameraRotation && hasReachedCashier.current;
+    // Check if page was reloaded
+    const isReload = performance.getEntriesByType("navigation")[0]?.type === 'reload';
+
+    if (isReload) {
+      console.log('🔄 Page reloaded - Resetting camera state to start');
+      // Reset store state to ensure we start fresh
+      useSceneStore.getState().reset();
+
+      // Standard start logic
+      console.log('🎬 Initial camera setup - starting far from cashier');
+      const startPosition = cameraPath.getPoint(0);
+      camera.position.copy(startPosition);
+      scrollOffset.current = 0;
+
+      camera.lookAt(-7, 3, 21.6);
+      camera.rotation.order = 'YXZ';
+      yaw.current = camera.rotation.y;
+      pitch.current = camera.rotation.x;
+      console.log('👁️ Camera looking at cashier');
+
+      setCameraLocked(false);
+      console.log('🔓 Camera unlocked - user can scroll towards cashier');
+      return;
+    }
+
+    const isReturningFromPortfolio = savedCameraPosition && savedCameraRotation && savedScrollOffset !== null;
 
     if (isReturningFromPortfolio) {
       console.log('🔄 Restoring saved camera position (returning from portfolio)');
@@ -84,6 +111,10 @@ export function CameraFPS() {
       pitch.current = savedCameraRotation.x;
       camera.rotation.y = yaw.current;
       camera.rotation.x = pitch.current;
+
+      // IMPORTANT: Restore scroll offset to prevent camera from jumping back to path start
+      scrollOffset.current = savedScrollOffset;
+      console.log(`📜 Restored scroll offset: ${savedScrollOffset.toFixed(3)}`);
 
       console.log('🔓 Unlocking camera for restored state');
       setCameraLocked(false);
@@ -109,10 +140,11 @@ export function CameraFPS() {
       setCameraLocked(false);
       console.log('🔓 Camera unlocked - user can scroll towards cashier');
     }
-  }, [camera, savedCameraPosition, savedCameraRotation, setCameraLocked]);
+  }, [camera, savedCameraPosition, savedCameraRotation, savedScrollOffset, setCameraLocked, active]);
 
   // Handle pointer lock
   useEffect(() => {
+    if (!active) return;
     const canvas = gl.domElement;
 
     const onLockChange = () => {
@@ -127,6 +159,7 @@ export function CameraFPS() {
     };
 
     const onCanvasClick = (e) => {
+      if (!active) return;
       const isManuallyVisible = document.body.getAttribute('data-cursor-manual') === 'true';
       const isAlreadyLocked = document.pointerLockElement === canvas;
 
@@ -150,12 +183,12 @@ export function CameraFPS() {
       canvas.removeEventListener('click', onCanvasClick);
       document.removeEventListener('pointerlockchange', onLockChange);
     };
-  }, [gl, storeCameraLocked]);
+  }, [gl, storeCameraLocked, active]);
 
   // Handle mouse movement for FPS rotation
   useEffect(() => {
     const onMouseMove = (e) => {
-      if (!isLocked.current || cameraLocked.current || storeCameraLocked) return;
+      if (!active || !isLocked.current || cameraLocked.current || storeCameraLocked) return;
 
       const dx = e.movementX || 0;
       const dy = e.movementY || 0;
@@ -167,24 +200,27 @@ export function CameraFPS() {
 
     document.addEventListener('mousemove', onMouseMove);
     return () => document.removeEventListener('mousemove', onMouseMove);
-  }, [storeCameraLocked]);
+  }, [storeCameraLocked, active]);
 
   // Save camera state periodically
   useEffect(() => {
+    if (!active) return;
     const saveInterval = setInterval(() => {
       if (!cameraLocked.current && !storeCameraLocked) {
         setCameraState(
           { x: camera.position.x, y: camera.position.y, z: camera.position.z },
-          { x: pitch.current, y: yaw.current }
+          { x: pitch.current, y: yaw.current },
+          scrollOffset.current
         );
       }
     }, 500);
 
     return () => clearInterval(saveInterval);
-  }, [camera, setCameraState, storeCameraLocked]);
+  }, [camera, setCameraState, storeCameraLocked, active]);
 
   // DEBUG: Log camera position and scroll value
   useEffect(() => {
+    if (!active) return;
     const debugInterval = setInterval(() => {
       const pos = camera.position;
       const yawDeg = ((yaw.current * 180) / Math.PI).toFixed(1);
@@ -198,10 +234,11 @@ export function CameraFPS() {
     }, 500);
 
     return () => clearInterval(debugInterval);
-  }, [camera]);
+  }, [camera, active]);
 
   // Listen for inspection mode
   useEffect(() => {
+    if (!active) return;
     const onInspectionMode = (e) => {
       const wasLocked = cameraLocked.current;
       cameraLocked.current = e.detail.locked;
@@ -226,10 +263,11 @@ export function CameraFPS() {
 
     window.addEventListener('inspection-mode', onInspectionMode);
     return () => window.removeEventListener('inspection-mode', onInspectionMode);
-  }, [camera]);
+  }, [camera, active]);
 
   // Listen for camera transition event
   useEffect(() => {
+    if (!active) return;
     const onCameraTransition = () => {
       console.log('📹 Camera transition event received - rotating 90° left');
 
@@ -250,10 +288,11 @@ export function CameraFPS() {
 
     window.addEventListener('camera-transition-to-shelves', onCameraTransition);
     return () => window.removeEventListener('camera-transition-to-shelves', onCameraTransition);
-  }, []);
+  }, [active]);
 
   // Listen for reset cashier reached event
   useEffect(() => {
+    if (!active) return;
     const onResetCashier = () => {
       console.log('🔄 Resetting cashier reached flag');
       hasReachedCashier.current = false;
@@ -262,10 +301,11 @@ export function CameraFPS() {
 
     window.addEventListener('reset-cashier-reached', onResetCashier);
     return () => window.removeEventListener('reset-cashier-reached', onResetCashier);
-  }, []);
+  }, [active]);
 
   // Render loop
   useFrame(() => {
+    if (!active) return;
     // Always apply rotation
     camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw.current;

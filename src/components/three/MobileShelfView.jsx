@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useRef, useEffect } from 'react'
 import { useSceneStore } from '@/store/useSceneStore'
 
-export function MobileShelfView() {
+export function MobileShelfView({ active = true }) {
   const { camera } = useThree()
   const scrollPosition = useRef(0)
   const targetScrollPosition = useRef(0)
@@ -16,6 +16,7 @@ export function MobileShelfView() {
   const showDialogue = useSceneStore((state) => state.showDialogue)
 
   useEffect(() => {
+    if (!active) return;
     // Only restore if there's saved position AND dialogue is hidden (user was exploring)
     if (savedCameraPosition && savedCameraRotation && !showDialogue) {
       // Restore saved camera state when returning from portfolio
@@ -64,12 +65,12 @@ export function MobileShelfView() {
 
     // Handle touch events for horizontal scrolling
     const handleTouchStart = (e) => {
-      if (cameraLocked) return
+      if (cameraLocked || !active) return
       touchStartRef.current = e.touches[0].clientX
     }
 
     const handleTouchMove = (e) => {
-      if (touchStartRef.current === null || cameraLocked) return
+      if (touchStartRef.current === null || cameraLocked || !active) return
 
       const touchCurrent = e.touches[0].clientX
       const diff = touchStartRef.current - touchCurrent
@@ -93,10 +94,11 @@ export function MobileShelfView() {
       window.removeEventListener('touchmove', handleTouchMove)
       window.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [camera, cameraLocked, savedCameraPosition, savedCameraRotation, showDialogue, setCameraLocked])
+  }, [camera, cameraLocked, savedCameraPosition, savedCameraRotation, showDialogue, setCameraLocked, active])
 
   // Listen for camera transition event (mobile: just unlock after short delay)
   useEffect(() => {
+    if (!active) return;
     const onCameraTransition = () => {
       console.log('📹 [Mobile] Camera transition event received - unlocking camera');
       setTimeout(() => {
@@ -106,10 +108,11 @@ export function MobileShelfView() {
 
     window.addEventListener('camera-transition-to-shelves', onCameraTransition);
     return () => window.removeEventListener('camera-transition-to-shelves', onCameraTransition);
-  }, [setCameraLocked]);
+  }, [setCameraLocked, active]);
 
   // Save camera state periodically for mobile (for "back to gallery" feature)
   useEffect(() => {
+    if (!active) return;
     const saveInterval = setInterval(() => {
       if (!cameraLocked) {
         setCameraState(
@@ -120,9 +123,10 @@ export function MobileShelfView() {
     }, 500); // Save every 500ms
 
     return () => clearInterval(saveInterval);
-  }, [camera, setCameraState, cameraLocked])
+  }, [camera, setCameraState, cameraLocked, active])
 
   useFrame(() => {
+    if (!active) return;
     // Don't update camera if locked
     if (cameraLocked) return
 

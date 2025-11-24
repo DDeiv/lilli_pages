@@ -40,7 +40,7 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}) {
     directionalLight.current = new DirectionalLight(0xffffff, 3)
     directionalLight.current.position.set(3, 4, 3)
     inspectionScene.current.add(directionalLight.current)
-    
+
     ambientLight.current = new AmbientLight(0xffffff, 1.5)
     inspectionScene.current.add(ambientLight.current)
   }
@@ -59,7 +59,25 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}) {
 
   useEffect(() => {
     const handleInteraction = (event) => {
-      if (targetRef.current && inspectionMeshRef?.current && !isolated) {
+      // Check if we are on the home page (active) by checking if the canvas wrapper is visible
+      // This is a bit of a hack, but since we don't pass 'active' prop here, we check the DOM
+      const canvasWrapper = document.querySelector('canvas')?.parentElement;
+      const isVisible = canvasWrapper && window.getComputedStyle(canvasWrapper).opacity !== '0';
+
+      // Also check if cursor is manually visible (e.g. user pressed X)
+      // If cursor is visible, we shouldn't be clicking on 3D objects
+      const isCursorVisible = document.body.getAttribute('data-cursor-manual') === 'true' ||
+        !document.body.classList.contains('hide-cursor');
+
+      // Only allow interaction if:
+      // 1. We are on the home page (canvas visible)
+      // 2. Cursor is HIDDEN (meaning we are in FPS mode) OR we are on mobile (where cursor concept is different)
+      // 3. Not already in inspection mode
+      if (!isVisible || (isCursorVisible && !isMobile) || isolated) {
+        return;
+      }
+
+      if (targetRef.current && inspectionMeshRef?.current) {
         let raycastPoint = new Vector2(0, 0)
 
         // On mobile, use tap position; on desktop, use center crosshair
@@ -108,7 +126,7 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}) {
       window.removeEventListener('click', handleInteraction)
       window.removeEventListener('touchend', handleInteraction)
     }
-  }, [targetRef, inspectionMeshRef, isolated, camera])
+  }, [targetRef, inspectionMeshRef, isolated, camera, isMobile])
 
   const exitIsolation = useCallback(() => {
     if (inspectionObject.current) {
