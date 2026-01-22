@@ -28,7 +28,7 @@ export function MainCanvas({ sceneItems = [], active = true }) {
             >
                 <Environment files="/images/path.jpg" />
                 {/* Unified scene with cashier and shelves */}
-                <Model sceneItems={sceneItems} />
+                <Model sceneItems={sceneItems} active={active} isMobile={isMobile} />
 
                 {/* Camera controls - now with custom scroll handling */}
                 {mounted && (isMobile ? <MobileShelfView active={active} /> : <CameraFPS active={active} />)}

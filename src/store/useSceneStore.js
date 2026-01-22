@@ -31,6 +31,10 @@ export const useSceneStore = create(
         scrollOffset: scrollOffset,
       }),
 
+      // ID of the item currently being inspected (persisted to restore UI on return)
+      inspectedItemId: null,
+      setInspectedItemId: (id) => set({ inspectedItemId: id }),
+
       // Reset all state (useful for testing or "back" button)
       reset: () => set({
         cameraLocked: false,
@@ -39,6 +43,7 @@ export const useSceneStore = create(
         cameraPosition: null,
         cameraRotation: null,
         scrollOffset: null,
+        inspectedItemId: null,
       }),
     }),
     {
@@ -49,6 +54,7 @@ export const useSceneStore = create(
         cameraPosition: state.cameraPosition,
         cameraRotation: state.cameraRotation,
         scrollOffset: state.scrollOffset,
+        inspectedItemId: state.inspectedItemId,
       }),
       // Migrate or clear old data
       migrate: (persistedState, version) => {
@@ -58,6 +64,7 @@ export const useSceneStore = create(
             cameraPosition: null,
             cameraRotation: null,
             scrollOffset: null,
+            inspectedItemId: null,
           };
         }
         return persistedState;

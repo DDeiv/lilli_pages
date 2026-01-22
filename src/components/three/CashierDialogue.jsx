@@ -10,11 +10,17 @@ export function CashierDialogue() {
   const setCameraLocked = useSceneStore((state) => state.setCameraLocked)
   const setShowScrollBlock = useSceneStore((state) => state.setShowScrollBlock)
 
-  const handleInteractiveExperience = () => {
+  const handleInteractiveExperience = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     console.log('🎬 Interactive Experience clicked!');
 
-    // Hide dialogue
+    // Hide dialogue immediately
     setShowDialogue(false)
+
+    // Force hide via DOM to ensure instant feedback on mobile
+    const overlay = document.getElementById('cashier-dialogue-overlay');
+    if (overlay) overlay.style.display = 'none';
+
     console.log('💬 Dialogue hidden');
 
     // Hide scroll block overlay
@@ -26,21 +32,27 @@ export function CashierDialogue() {
     console.log('🔄 Resetting cashier reached flag');
 
     // Request pointer lock immediately (button click is a user gesture!)
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-      console.log('🔒 Requesting pointer lock from button click...');
-      canvas.requestPointerLock()
-        .then(() => {
-          console.log('✅ Pointer lock engaged immediately!');
-        })
-        .catch((err) => {
-          console.log('❌ Pointer lock failed:', err);
-        });
+    // Only on desktop
+    const isMobile = window.innerWidth < 768; // Simple check or use hook if available
+    if (!isMobile) {
+      const canvas = document.querySelector('canvas');
+      if (canvas) {
+        console.log('🔒 Requesting pointer lock from button click...');
+        canvas.requestPointerLock()
+          .then(() => {
+            console.log('✅ Pointer lock engaged immediately!');
+          })
+          .catch((err) => {
+            console.log('❌ Pointer lock failed:', err);
+          });
+      }
     }
 
     // Hide cursor immediately
-    document.body.classList.add('hide-cursor');
-    console.log('🚫 Cursor hidden');
+    if (!isMobile) {
+      document.body.classList.add('hide-cursor');
+      console.log('🚫 Cursor hidden');
+    }
 
     // Trigger camera rotation (90° left, 1 second)
     console.log('📹 Triggering camera rotation');
@@ -53,7 +65,8 @@ export function CashierDialogue() {
     }, 1200)
   }
 
-  const handleVisitWebsite = () => {
+  const handleVisitWebsite = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     // Navigate to portfolio page
     router.push('/portfolio')
   }
@@ -61,7 +74,7 @@ export function CashierDialogue() {
   if (!showDialogue) return null
 
   return (
-    <div className="fixed inset-0 flex items-end justify-center pb-8 md:pb-16 z-50 pointer-events-none">
+    <div id="cashier-dialogue-overlay" className="fixed inset-0 flex items-end justify-center pb-8 md:pb-16 z-50 pointer-events-none">
       <div
         className="pointer-events-auto bg-gradient-to-br from-gray-200 to-gray-300 shadow-2xl"
         style={{
@@ -107,7 +120,7 @@ export function CashierDialogue() {
           {/* Menu options */}
           <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
-              onClick={handleInteractiveExperience}
+              onClick={(e) => handleInteractiveExperience(e)}
               style={{
                 padding: '8px 12px',
                 cursor: 'pointer',
@@ -125,7 +138,7 @@ export function CashierDialogue() {
               <span>EXPLORE 3D GALLERY</span>
             </button>
             <button
-              onClick={handleVisitWebsite}
+              onClick={(e) => handleVisitWebsite(e)}
               style={{
                 padding: '8px 12px',
                 cursor: 'pointer',

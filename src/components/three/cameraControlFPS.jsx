@@ -121,9 +121,13 @@ export function CameraFPS({ active = true }) {
       cameraLocked.current = false;
 
       const isManuallyVisible = document.body.getAttribute('data-cursor-manual') === 'true';
-      if (!isManuallyVisible) {
+      const inspectedItemId = useSceneStore.getState().inspectedItemId;
+
+      if (!isManuallyVisible && !inspectedItemId) {
         document.body.classList.add('hide-cursor');
         console.log('🚫 Cursor hidden - click canvas to re-engage pointer lock');
+      } else if (inspectedItemId) {
+        console.log('👁️ Restoring with inspection active - keeping cursor visible');
       }
     } else {
       console.log('🎬 Initial camera setup - starting far from cashier');
