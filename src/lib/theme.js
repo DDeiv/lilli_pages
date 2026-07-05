@@ -10,24 +10,35 @@
  */
 
 export const SLUDGE = {
-  // Atmosphere
-  fog: '#a9a79a',        // smoggy warm gray - also the sky/background
-  fogNear: 9,
-  fogFar: 60,
+  // Atmosphere - STRONG pale warm-green haze; fog is the main depth cue
+  // (shading is a flat 2-band toon, so distance = wash-out, like SL)
+  fog: '#ccc6a4',
+  fogNear: 7,
+  fogFar: 42,
 
-  // Concrete world
-  concrete: '#8f8f8f',       // shelf bodies, facade walls
-  concreteLight: '#a5a5a5',  // shelf boards
-  concreteDark: '#6f6f6f',   // counter, rail
-  floor: '#787672',          // floor plane - slightly warm dark concrete
-  doors: '#7c8a89',          // entry doors - faint teal tint
+  // Every element gets a deliberate color (sampled from the SL screenshot)
+  wall: '#b7c2a4',           // interior walls + facade: pale mint-gray
+  ceiling: '#9aa287',        // ceiling: deeper warm green-gray
+  shelf: '#e8dcc4',          // shelf back panels: off-white (same as boards)
+  shelfBoard: '#e8dcc4',     // shelf boards: cream
+  rail: '#e05a4a',           // price rail: red-orange (table red)
+  counter: '#f0942c',        // checkout cabinet: hero orange (the hot dog stand)
+  counterTop: '#efe4cd',     // checkout top: cream
+  floor: '#c4a494',          // OUTSIDE floor: pinkish sun-washed concrete
+  doors: '#5fb8b0',          // entry doors: teal
+  checkerLight: '#e9dfcc',   // inside floor tiles: cream
+  checkerDark: '#2e2b26',    // inside floor tiles: brown-black (not pure black)
+
+  // Legacy aliases (a few props still reference these)
+  concrete: '#b7c2a4',
+  concreteLight: '#e8dcc4',
+  concreteDark: '#8a8272',
 
   // Characters get a pop of color ("weird characters" rule)
-  cashierFigure: '#c9645c',
+  cashierFigure: '#57d996',  // mint-green blob energy (swap if too weird)
 
-  // Products carry the color in an otherwise gray world.
-  // Cycled per shelf row - muted-but-loud, dirty tones.
-  productAccents: ['#d9b23c', '#5cb5a2', '#d96f6f', '#8aa356', '#b878c9', '#6f87d9'],
+  // Products carry the color - screenshot-family saturated pops
+  productAccents: ['#f0942c', '#5fd98f', '#e8656e', '#f2c53d', '#f287b0', '#4fa8d9'],
 
   // Outlines stay as they are (intentional) - defined in JaggedEdges defaults.
 

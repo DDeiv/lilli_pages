@@ -9,6 +9,7 @@ import { CursorHintWrapper } from "./CursorHintWrapper";
 import { CashierDialogue } from "./CashierDialogue";
 import { ScrollBlockOverlay } from "./ScrollBlockOverlay";
 import { PostFX } from "./PostFX";
+import { ThemePicker } from "./ThemePicker";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { SLUDGE } from "@/lib/theme";
 import { useSceneStore } from "@/store/useSceneStore";
@@ -35,6 +36,8 @@ export function MainCanvas({ sceneItems = [], active = true }) {
                 {/* Sludge Life atmosphere: smoggy sky + hazy fog */}
                 <color attach="background" args={[SLUDGE.fog]} />
                 <fog attach="fog" args={[SLUDGE.fog, SLUDGE.fogNear, SLUDGE.fogFar]} />
+                {/* Warm ambient keeps toon shadow bands colored, never black */}
+                <ambientLight color="#ffe6cf" intensity={0.7} />
                 <Environment files="/images/path.jpg" />
                 {/* Unified scene with cashier and shelves */}
                 <Model sceneItems={sceneItems} active={active} isMobile={isMobile} />
@@ -84,6 +87,9 @@ export function MainCanvas({ sceneItems = [], active = true }) {
                     </div>
                 )}
             </div>
+
+            {/* Dev-only theme picker — press T to open */}
+            <ThemePicker />
         </div>
     );
 }
