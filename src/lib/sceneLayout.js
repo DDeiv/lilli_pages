@@ -138,13 +138,19 @@ export function getShelfUnits(itemCount, forMobile = false) {
   return units;
 }
 
-/** Price rails (one above the left product wall of each segment). */
+/**
+ * Price rails (one above the left product wall of each segment).
+ * NOTE: the rail used to sit at y=4 with the SAME footprint as the middle
+ * shelf board (also y=4) - two identical boxes in the same space =
+ * z-fighting ("two overlapping blocks" glitch). Now raised above the board
+ * (y=4.2) and pulled slightly toward the corridor so no faces are coplanar.
+ */
 export function getRails(itemCount, forMobile = false) {
   const segments = getAisleCount(itemCount, forMobile);
   const rails = [];
   for (let a = 0; a < segments; a++) {
     rails.push({
-      position: [CORRIDOR_X + RAIL_X, 4, segmentZ(a)],
+      position: [CORRIDOR_X + RAIL_X + 0.12, 4.2, segmentZ(a)],
       rotation: [-Math.PI, 0, -Math.PI],
       scale: [0.7, 0.1, 12],
     });
@@ -163,6 +169,57 @@ export function getAisleLights(itemCount, forMobile = false) {
   }
   lights.push([-5.45, 7.63, 22.528]); // cashier
   return lights;
+}
+
+// ---- Decorative flanking shelf rows (not browsable, just set dressing) ------
+// One corridor of shelving on each side of the central aisle.
+// Right flank mirrors the original hand-placed second aisle (1.483/12.416);
+// left flank hugs the left wall (xMin=-18).
+const DECOR_UNITS = [
+  { x: 1.5, rotated: true },    // boards face east, into the right decor corridor
+  { x: 12.5, rotated: false },  // boards face west
+  { x: -16.9, rotated: true },  // boards face east, toward the main aisle
+];
+
+// Product strip offset from a shelf unit's center depends on orientation
+// (measured from the original scene: -10.433 -> -9.187 and 0.5 -> -0.914)
+const STRIP_OFFSET_ROTATED = 1.246;
+const STRIP_OFFSET_PLAIN = -1.414;
+
+export function getDecorShelves(itemCount, forMobile = false) {
+  const segments = getAisleCount(itemCount, forMobile);
+  const units = [];
+  for (let a = 0; a < segments; a++) {
+    for (const u of DECOR_UNITS) {
+      units.push({
+        position: [u.x, 3, segmentZ(a)],
+        rotation: u.rotated ? [-Math.PI, 0, -Math.PI] : [0, 0, 0],
+        scale: SHELF_SCALE,
+      });
+    }
+  }
+  return units;
+}
+
+/** Cheap solid strips stocking the decorative shelves (1 mesh each). */
+export function getDecorStrips(itemCount, forMobile = false) {
+  const segments = getAisleCount(itemCount, forMobile);
+  const strips = [];
+  const ys = [4.656, 2.708, 0.997];
+  for (let a = 0; a < segments; a++) {
+    DECOR_UNITS.forEach((u, ui) => {
+      const offset = u.rotated ? STRIP_OFFSET_ROTATED : STRIP_OFFSET_PLAIN;
+      ys.forEach((y, r) => {
+        strips.push({
+          position: [u.x + offset, y, segmentZ(a) + 0.176],
+          rotation: PRODUCT_ROTATION,
+          scale: PRODUCT_SCALE,
+          colorIndex: (a * 3 + r + ui * 2) % 6,
+        });
+      });
+    });
+  }
+  return strips;
 }
 
 /**
@@ -235,19 +292,27 @@ export function getAisleSignSpecs(itemCount, forMobile = false) {
   return signs;
 }
 
-/** Floor plane extent (covers the store + the outside approach). */
-export function getFloorSpec(itemCount) {
+/**
+ * Floor planes: checkerboard INSIDE the market only, plain concrete
+ * outside. (y slightly below shelf bases to avoid z-fighting.)
+ */
+export function getFloorSpecs(itemCount) {
   const segments = Math.max(
     getAisleCount(itemCount, false),
     getAisleCount(itemCount, true)
   );
-  const zMin = segmentZ(segments - 1) - 25;
-  const zMax = STOREFRONT_Z + OUTSIDE_TRAVEL + 12;
+  const { xMin, xMax } = getFacadeExtent();
+  const zBack = segmentZ(segments - 1) - 25;
+  const zOutside = STOREFRONT_Z + OUTSIDE_TRAVEL + 12;
   return {
-    // centered plane: position + size (y slightly below the shelf bases
-    // to avoid z-fighting where they touch the ground)
-    position: [(-18 + 14) / 2, -0.02, (zMin + zMax) / 2],
-    size: [60, zMax - zMin],
+    inside: {
+      position: [(xMin + xMax) / 2, -0.02, (zBack + STOREFRONT_Z) / 2],
+      size: [xMax - xMin, STOREFRONT_Z - zBack],
+    },
+    outside: {
+      position: [(xMin + xMax) / 2, -0.03, (STOREFRONT_Z + zOutside) / 2],
+      size: [60, zOutside - STOREFRONT_Z],
+    },
   };
 }
 

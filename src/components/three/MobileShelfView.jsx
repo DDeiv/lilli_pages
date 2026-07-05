@@ -146,20 +146,23 @@ export function MobileShelfView({ active = true, itemCount = 0 }) {
 
     const handleTouchMove = (e) => {
       if (touchStart.current === null || cameraLocked) return
+      // Never scroll the camera while an inspection window is open -
+      // drags in the viewer would move the world underneath it
+      if (useSceneStore.getState().inspectedItemId) return
       const x = e.touches[0].clientX
       const y = e.touches[0].clientY
 
       if (phase.current === 'approach') {
         // Vertical swipe walks the entry path (direction is a layout constant)
         const diff = (y - touchStart.current.y) * ENTRY_SWIPE_DIRECTION
-        targetEntryT.current = Math.max(0, Math.min(1, targetEntryT.current + diff * 0.0012))
+        targetEntryT.current = Math.max(0, Math.min(1, targetEntryT.current + diff * 0.0022))
       } else {
         // Horizontal swipe pans along the wall. Facing -X, view-right = -Z:
         // dragging the finger left pulls the next shelves in from the right.
         const diff = touchStart.current.x - x
         targetScrollZ.current = Math.max(
           bounds.min,
-          Math.min(bounds.max, targetScrollZ.current - diff * 0.012)
+          Math.min(bounds.max, targetScrollZ.current - diff * 0.028)
         )
       }
 
@@ -274,6 +277,8 @@ export function MobileShelfView({ active = true, itemCount = 0 }) {
 
   useFrame(() => {
     if (!active || cameraLocked) return
+    // While inspecting, useFocusEffect pins the camera - don't fight it
+    if (useSceneStore.getState().inspectedItemId) return
 
     if (phase.current === 'approach') {
       entryT.current += (targetEntryT.current - entryT.current) * 0.08

@@ -14,9 +14,11 @@ import {
   getRails,
   getAisleLights,
   getFacadeExtent,
-  getFloorSpec,
+  getFloorSpecs,
   getStoreShellSpec,
   getAisleSignSpecs,
+  getDecorShelves,
+  getDecorStrips,
   itemIndexForSlot,
   STOREFRONT_Z,
   DOOR_CENTER_X,
@@ -31,8 +33,11 @@ import {
   InspectionProp,
   TextSign,
   CashRegister,
+  CheckoutCounter,
   BasketStack,
   LightFixture,
+  ToonMaterial,
+  useCheckerTexture,
   PROP_TYPES,
 } from './props'
 
@@ -147,7 +152,7 @@ function InspectionMesh({ modelUrl, scale = 1, meshRef, fallbackProp }) {
       scale={scale}
     >
       {geometryComponent}
-      <meshStandardMaterial color="#cccccc" />
+      <ToonMaterial color="#cccccc" />
       <JaggedEdges />
     </mesh>
   );
@@ -187,25 +192,30 @@ function ProductRow({ item, position, active, color, propType, slotIndex }) {
   )
 }
 
-/** One shelf unit (base + 3 boards), reusing the original GLB geometries. */
-function ShelfUnit({ nodes, position, rotation, scale }) {
+/**
+ * One shelf unit: THIN vertical back panel + 4 boards (a new bottom one
+ * grounds the lowest product row). Boards are siblings, not children of
+ * the scaled panel, so the panel can be slimmed without moving them.
+ * Board positions keep the measured world offsets (products at ±1.246
+ * from the unit center still land on the boards).
+ */
+function ShelfUnit({ nodes, position, rotation }) {
+  const g = nodes.Cube?.geometry
+  const boardYs = [-2.64, -1, 1, 2.7] // world y: 0.36, 2, 4, 5.7
   return (
-    <mesh geometry={nodes.Cube?.geometry} position={position} rotation={rotation} scale={scale}>
-      <meshStandardMaterial color={SLUDGE.concrete} />
-      <mesh geometry={nodes.Cube002?.geometry} position={[-2.4, 0.333, 0]} scale={[1.4, 0.033, 1]}>
-        <meshStandardMaterial color={SLUDGE.concreteLight} />
+    <group position={position} rotation={rotation}>
+      {/* slim vertical back panel (was 1.0 thick, now 0.36) */}
+      <mesh geometry={g} scale={[0.18, 3, 12]}>
+        <ToonMaterial color={SLUDGE.shelf} />
         <JaggedEdges />
       </mesh>
-      <mesh geometry={nodes.Cube003?.geometry} position={[-2.4, -0.9, 0]} scale={[1.4, 0.033, 1]}>
-        <meshStandardMaterial color={SLUDGE.concreteLight} />
-        <JaggedEdges />
-      </mesh>
-      <mesh geometry={nodes.Cube004?.geometry} position={[-2.4, -0.333, 0]} scale={[1.4, 0.033, 1]}>
-        <meshStandardMaterial color={SLUDGE.concreteLight} />
-        <JaggedEdges />
-      </mesh>
-      <JaggedEdges />
-    </mesh>
+      {boardYs.map((y, i) => (
+        <mesh key={i} geometry={g} position={[-1.04, y, 0]} scale={[0.86, 0.1, 12]}>
+          <ToonMaterial color={SLUDGE.shelfBoard} />
+          <JaggedEdges />
+        </mesh>
+      ))}
+    </group>
   )
 }
 
@@ -264,14 +274,11 @@ function CashierInteractive({ nodes, active }) {
 
   return (
     <group ref={groupRef}>
-      {/* Counter */}
-      <mesh geometry={nodes.Cube016?.geometry} position={[-6.502, 0.783, 21.541]} scale={[0.989, 1, 3.027]}>
-        <meshStandardMaterial color={SLUDGE.concreteDark} />
-        <JaggedEdges />
-      </mesh>
+      {/* Checkout counter (procedural: cabinet, belt, divider, bagging tray) */}
+      <CheckoutCounter position={[-6.502, 0, 21.541]} />
       {/* Cashier figure - characters get a pop of color in a gray world */}
       <mesh geometry={nodes.Cube025?.geometry} position={[-8.937, 2.138, 21.609]} rotation={[-Math.PI, 0, -Math.PI]} scale={[-0.529, 2.226, 0.679]}>
-        <meshStandardMaterial color={SLUDGE.cashierFigure} />
+        <ToonMaterial color={SLUDGE.cashierFigure} />
         <JaggedEdges />
       </mesh>
     </group>
@@ -320,25 +327,25 @@ function Storefront() {
       {/* Left wall */}
       <mesh position={[(xMin + gapL) / 2, FACADE_HEIGHT / 2, 0]} scale={[gapL - xMin, FACADE_HEIGHT, 0.4]}>
         <boxGeometry />
-        <meshStandardMaterial color={SLUDGE.concrete} />
+        <ToonMaterial color={SLUDGE.wall} />
         <JaggedEdges maxDistance={60} />
       </mesh>
       {/* Right wall */}
       <mesh position={[(gapR + xMax) / 2, FACADE_HEIGHT / 2, 0]} scale={[xMax - gapR, FACADE_HEIGHT, 0.4]}>
         <boxGeometry />
-        <meshStandardMaterial color={SLUDGE.concrete} />
+        <ToonMaterial color={SLUDGE.wall} />
         <JaggedEdges maxDistance={60} />
       </mesh>
       {/* Header above the door gap */}
       <mesh position={[DOOR_CENTER_X, (DOOR_GAP_HEIGHT + FACADE_HEIGHT) / 2, 0]} scale={[DOOR_GAP_WIDTH, FACADE_HEIGHT - DOOR_GAP_HEIGHT, 0.4]}>
         <boxGeometry />
-        <meshStandardMaterial color={SLUDGE.concrete} />
+        <ToonMaterial color={SLUDGE.wall} />
         <JaggedEdges maxDistance={60} />
       </mesh>
       {/* Sign above the doors - one accent so the entrance reads from afar */}
       <mesh position={[DOOR_CENTER_X, FACADE_HEIGHT + 0.7, 0.3]} scale={[DOOR_GAP_WIDTH + 2, 1.4, 0.3]}>
         <boxGeometry />
-        <meshStandardMaterial color={SLUDGE.productAccents[0]} />
+        <ToonMaterial color={SLUDGE.productAccents[0]} />
         <JaggedEdges maxDistance={60} />
       </mesh>
       {/* Store name on the sign face */}
@@ -352,12 +359,12 @@ function Storefront() {
       {/* Sliding door panels (slide sideways into the walls) */}
       <mesh ref={leftDoor} position={[leftClosedX, DOOR_GAP_HEIGHT / 2, 0.05]} scale={[panelW, DOOR_GAP_HEIGHT, 0.15]}>
         <boxGeometry />
-        <meshStandardMaterial color={SLUDGE.doors} />
+        <ToonMaterial color={SLUDGE.doors} />
         <JaggedEdges maxDistance={60} />
       </mesh>
       <mesh ref={rightDoor} position={[rightClosedX, DOOR_GAP_HEIGHT / 2, 0.05]} scale={[panelW, DOOR_GAP_HEIGHT, 0.15]}>
         <boxGeometry />
-        <meshStandardMaterial color={SLUDGE.doors} />
+        <ToonMaterial color={SLUDGE.doors} />
         <JaggedEdges maxDistance={60} />
       </mesh>
     </group>
@@ -378,35 +385,46 @@ function StoreShell({ itemCount }) {
       {/* Left wall */}
       <mesh position={[s.xMin, s.height / 2, zMid]}>
         <boxGeometry args={[0.4, s.height, depth]} />
-        <meshStandardMaterial color={SLUDGE.concrete} />
+        <ToonMaterial color={SLUDGE.wall} />
       </mesh>
       {/* Right wall */}
       <mesh position={[s.xMax, s.height / 2, zMid]}>
         <boxGeometry args={[0.4, s.height, depth]} />
-        <meshStandardMaterial color={SLUDGE.concrete} />
+        <ToonMaterial color={SLUDGE.wall} />
       </mesh>
       {/* Back wall */}
       <mesh position={[(s.xMin + s.xMax) / 2, s.height / 2, s.zBack]}>
         <boxGeometry args={[width, s.height, 0.4]} />
-        <meshStandardMaterial color={SLUDGE.concrete} />
+        <ToonMaterial color={SLUDGE.wall} />
       </mesh>
       {/* Ceiling */}
       <mesh position={[(s.xMin + s.xMax) / 2, s.height, zMid]}>
         <boxGeometry args={[width, 0.3, depth]} />
-        <meshStandardMaterial color={SLUDGE.concreteDark} />
+        <ToonMaterial color={SLUDGE.ceiling} />
       </mesh>
     </group>
   )
 }
 
-/** Flat concrete floor under the whole store + the outside approach. */
+/**
+ * Floors: checkerboard INSIDE the market (the Sludge Life classic),
+ * plain warm concrete outside the doors.
+ */
 function Floor({ itemCount }) {
-  const spec = useMemo(() => getFloorSpec(itemCount), [itemCount])
+  const specs = useMemo(() => getFloorSpecs(itemCount), [itemCount])
+  // One checker cell = 2 tiles; tile ~0.7 world units
+  const checker = useCheckerTexture(specs.inside.size[0] / 1.4, specs.inside.size[1] / 1.4)
   return (
-    <mesh position={spec.position} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={spec.size} />
-      <meshStandardMaterial color={SLUDGE.floor} />
-    </mesh>
+    <group>
+      <mesh position={specs.inside.position} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={specs.inside.size} />
+        <ToonMaterial map={checker} color="#ffffff" />
+      </mesh>
+      <mesh position={specs.outside.position} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={specs.outside.size} />
+        <ToonMaterial color={SLUDGE.floor} />
+      </mesh>
+    </group>
   )
 }
 
@@ -421,6 +439,8 @@ export function Model({ sceneItems = [], active = true, isMobile = false, ...pro
   const rails = useMemo(() => getRails(itemCount, isMobile), [itemCount, isMobile])
   const lights = useMemo(() => getAisleLights(itemCount, isMobile), [itemCount, isMobile])
   const aisleSigns = useMemo(() => getAisleSignSpecs(itemCount, isMobile), [itemCount, isMobile])
+  const decorShelves = useMemo(() => getDecorShelves(itemCount, isMobile), [itemCount, isMobile])
+  const decorStrips = useMemo(() => getDecorStrips(itemCount, isMobile), [itemCount, isMobile])
 
   return (
     <group {...props} dispose={null}>
@@ -463,10 +483,34 @@ export function Model({ sceneItems = [], active = true, isMobile = false, ...pro
         />
       ))}
 
+      {/* Decorative flanking shelf rows (set dressing, not clickable):
+          cheap solid strips instead of prop rows to keep draw calls down */}
+      {decorShelves.map((u, i) => (
+        <ShelfUnit
+          key={`decor-shelf-${i}`}
+          nodes={nodes}
+          position={u.position}
+          rotation={u.rotation}
+          scale={u.scale}
+        />
+      ))}
+      {decorStrips.map((s, i) => (
+        <mesh
+          key={`decor-strip-${i}`}
+          geometry={nodes.produc_1?.geometry}
+          position={s.position}
+          rotation={s.rotation}
+          scale={s.scale}
+        >
+          <ToonMaterial color={SLUDGE.productAccents[s.colorIndex]} />
+          <JaggedEdges />
+        </mesh>
+      ))}
+
       {/* Price rails above the left product wall of each segment */}
       {rails.map((r, i) => (
         <mesh key={`rail-${i}`} geometry={nodes.Cube021?.geometry} position={r.position} rotation={r.rotation} scale={r.scale}>
-          <meshStandardMaterial color={SLUDGE.concreteDark} />
+          <ToonMaterial color={SLUDGE.rail} />
           <JaggedEdges />
         </mesh>
       ))}
@@ -488,7 +532,7 @@ export function Model({ sceneItems = [], active = true, isMobile = false, ...pro
       ))}
 
       {/* Checkout dressing */}
-      <CashRegister position={[-6.4, 1.79, 19.6]} rotation={[0, Math.PI / 2, 0]} />
+      <CashRegister position={[-6.4, 1.82, 19.9]} rotation={[0, Math.PI / 2, 0]} />
       <TextSign
         text="CHECKOUT"
         position={[-6.5, 5.4, 21.5]}
