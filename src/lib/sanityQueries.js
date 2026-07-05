@@ -1,5 +1,14 @@
 import { client } from './sanity'
 
+// Normalize sceneIndex to a number.
+// Handles legacy string values ("0".."5") and - importantly - index 0,
+// which the previous `item.sceneIndex ? ...` check treated as missing.
+function normalizeSceneIndex(value) {
+  if (value === null || value === undefined || value === '') return null
+  const n = parseInt(value)
+  return isNaN(n) ? null : n
+}
+
 // GROQ query to get all portfolio items
 const portfolioItemsQuery = `*[_type == "portfolioItem"] | order(sceneIndex asc) {
   "id": id.current,
@@ -27,7 +36,7 @@ export async function getAllItems() {
     // Parse sceneIndex from string to number
     return items.map(item => ({
       ...item,
-      sceneIndex: item.sceneIndex ? parseInt(item.sceneIndex) : null
+      sceneIndex: normalizeSceneIndex(item.sceneIndex)
     }))
   } catch (error) {
     console.error('Error fetching all items:', error)
@@ -57,9 +66,8 @@ export async function getItemById(id) {
       }
     }`
     const item = await client.fetch(query, { id })
-    // Parse sceneIndex from string to number
-    if (item && item.sceneIndex) {
-      item.sceneIndex = parseInt(item.sceneIndex)
+    if (item) {
+      item.sceneIndex = normalizeSceneIndex(item.sceneIndex)
     }
     return item
   } catch (error) {
@@ -87,7 +95,7 @@ export async function getSceneItems() {
     // Parse sceneIndex from string to number
     return items.map(item => ({
       ...item,
-      sceneIndex: item.sceneIndex ? parseInt(item.sceneIndex) : null
+      sceneIndex: normalizeSceneIndex(item.sceneIndex)
     }))
   } catch (error) {
     console.error('Error fetching scene items:', error)

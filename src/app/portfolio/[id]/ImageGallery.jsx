@@ -1,6 +1,21 @@
 'use client'
 
 import { useState } from 'react'
+import { SLUDGE } from '@/lib/theme'
+
+const UI = SLUDGE.ui
+
+const navButtonStyle = (enabled) => ({
+  padding: '6px 12px',
+  background: UI.panelAlt,
+  border: `2px solid ${enabled ? UI.text : UI.textDim}`,
+  cursor: enabled ? 'pointer' : 'not-allowed',
+  fontSize: '12px',
+  fontWeight: 'bold',
+  color: enabled ? UI.text : UI.textDim,
+  fontFamily: UI.font,
+  opacity: enabled ? 1 : 0.5,
+})
 
 export default function ImageGallery({ gallery }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -15,12 +30,14 @@ export default function ImageGallery({ gallery }) {
     setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length)
   }
 
+  const multiple = gallery.length > 1
+
   return (
     <div
       style={{
         marginBottom: '24px',
-        background: '#000',
-        border: '2px inset #808080',
+        background: UI.panel,
+        border: `2px solid ${UI.border}`,
         padding: '16px',
       }}
     >
@@ -28,7 +45,8 @@ export default function ImageGallery({ gallery }) {
       <div
         style={{
           position: 'relative',
-          background: '#1a1a1a',
+          background: '#000',
+          border: `2px solid ${UI.border}`,
           minHeight: '400px',
           display: 'flex',
           alignItems: 'center',
@@ -43,6 +61,7 @@ export default function ImageGallery({ gallery }) {
             fontSize: '14px',
             textAlign: 'center',
             padding: '20px',
+            fontFamily: UI.font,
           }}
         >
           <div style={{ marginBottom: '8px' }}>[ IMAGE PLACEHOLDER ]</div>
@@ -53,12 +72,12 @@ export default function ImageGallery({ gallery }) {
       {/* Image Caption */}
       <div
         style={{
-          background: '#c0c0c0',
-          border: '1px solid #808080',
+          background: UI.panelAlt,
+          border: `1px solid ${UI.border}`,
           padding: '8px',
           marginBottom: '12px',
           fontSize: '12px',
-          color: '#2d3748',
+          color: UI.textDim,
         }}
       >
         {gallery[currentImageIndex].caption}
@@ -66,39 +85,13 @@ export default function ImageGallery({ gallery }) {
 
       {/* Gallery Controls */}
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button
-          onClick={prevImage}
-          disabled={gallery.length <= 1}
-          style={{
-            padding: '6px 12px',
-            background: '#c0c0c0',
-            border: '2px outset #d0d0d0',
-            cursor: gallery.length > 1 ? 'pointer' : 'not-allowed',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            color: '#2d3748',
-            opacity: gallery.length <= 1 ? 0.5 : 1,
-          }}
-        >
+        <button onClick={prevImage} disabled={!multiple} style={navButtonStyle(multiple)}>
           ← Prev
         </button>
-        <span style={{ fontSize: '12px', color: '#c0c0c0' }}>
+        <span style={{ fontSize: '12px', color: UI.textDim, fontFamily: UI.font }}>
           {currentImageIndex + 1} / {gallery.length}
         </span>
-        <button
-          onClick={nextImage}
-          disabled={gallery.length <= 1}
-          style={{
-            padding: '6px 12px',
-            background: '#c0c0c0',
-            border: '2px outset #d0d0d0',
-            cursor: gallery.length > 1 ? 'pointer' : 'not-allowed',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            color: '#2d3748',
-            opacity: gallery.length <= 1 ? 0.5 : 1,
-          }}
-        >
+        <button onClick={nextImage} disabled={!multiple} style={navButtonStyle(multiple)}>
           Next →
         </button>
       </div>

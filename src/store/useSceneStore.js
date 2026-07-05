@@ -35,6 +35,12 @@ export const useSceneStore = create(
       inspectedItemId: null,
       setInspectedItemId: (id) => set({ inspectedItemId: id }),
 
+      // Mobile flow phase: 'approach' (swipe-in walk to the cashier)
+      // or 'browse' (camera locked on the shelf line, horizontal swipe).
+      // Not persisted; desktop ignores it.
+      mobilePhase: 'approach',
+      setMobilePhase: (phase) => set({ mobilePhase: phase }),
+
       // Reset all state (useful for testing or "back" button)
       reset: () => set({
         cameraLocked: false,
@@ -44,6 +50,7 @@ export const useSceneStore = create(
         cameraRotation: null,
         scrollOffset: null,
         inspectedItemId: null,
+        mobilePhase: 'approach',
       }),
     }),
     {

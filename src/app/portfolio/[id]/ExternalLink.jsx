@@ -1,11 +1,15 @@
 'use client'
 
+import { SLUDGE } from '@/lib/theme'
+
+const UI = SLUDGE.ui
+
 export function ExternalLink({ link }) {
   return (
     <div
       style={{
-        background: 'white',
-        border: '2px inset #808080',
+        background: UI.panelAlt,
+        border: `2px solid ${UI.border}`,
         padding: '16px',
         marginBottom: '24px',
       }}
@@ -14,8 +18,9 @@ export function ExternalLink({ link }) {
         style={{
           margin: '0 0 12px 0',
           fontSize: '14px',
-          color: '#2d3748',
+          color: UI.accent,
           fontWeight: 'bold',
+          letterSpacing: '1px',
         }}
       >
         ▸ EXTERNAL LINK
@@ -25,12 +30,12 @@ export function ExternalLink({ link }) {
         target="_blank"
         rel="noopener noreferrer"
         style={{
-          color: '#0000EE',
+          color: UI.link,
           fontSize: '13px',
           textDecoration: 'underline',
         }}
-        onMouseOver={(e) => (e.target.style.color = '#551A8B')}
-        onMouseOut={(e) => (e.target.style.color = '#0000EE')}
+        onMouseOver={(e) => (e.target.style.color = UI.accent)}
+        onMouseOut={(e) => (e.target.style.color = UI.link)}
       >
         {link}
       </a>

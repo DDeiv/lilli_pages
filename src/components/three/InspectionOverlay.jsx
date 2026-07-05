@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { WebGLRenderer } from 'three'
 import { useRouter } from 'next/navigation'
+import { SLUDGE } from '@/lib/theme'
+
+const UI = SLUDGE.ui
 
 // Animated dots component
 function AnimatedDots() {
@@ -94,37 +97,26 @@ export function useInspectionOverlay({
     renderer.setPixelRatio(window.devicePixelRatio)
     inspectionRenderer.current = renderer
 
-    // Exit handler - requests pointer lock and exits inspection mode
+    // Exit handler - exits inspection mode and tries to resume FPS mode
     const handleExit = (e) => {
       if (e && e.stopPropagation) {
         e.stopPropagation();
       }
-      console.log('🚪 Exiting inspection mode');
 
-      // Get the main canvas (not inspection canvas)
+      // Exit inspection mode FIRST so the store/camera state is consistent
+      exitIsolation();
+
+      // Best-effort: re-engage pointer lock (we're in a user gesture context).
+      // If the browser refuses (e.g. too soon after a previous unlock), the
+      // cursor simply stays visible and the user can click the canvas to resume.
       const mainCanvas = document.querySelector('canvas:not(#inspection-ui-overlay canvas)');
-
-      // Request pointer lock immediately (we're in user gesture context!)
-      // Only request on desktop where pointer lock is supported/needed
       const isMobile = window.innerWidth < 768;
       if (!isMobile && mainCanvas && typeof mainCanvas.requestPointerLock === 'function') {
-        console.log('🔒 Requesting pointer lock from inspection exit...');
-        mainCanvas.requestPointerLock()
-          .then(() => {
-            console.log('✅ Pointer lock re-engaged from inspection exit!');
-          })
-          .catch((err) => {
-            console.log('❌ Pointer lock failed from inspection exit:', err);
-            console.log('💡 User can click canvas to re-engage pointer lock');
-          });
+        const lockPromise = mainCanvas.requestPointerLock();
+        if (lockPromise && lockPromise.catch) {
+          lockPromise.catch(() => { /* cursor stays visible - that's fine */ });
+        }
       }
-
-      // Hide cursor immediately
-      document.body.classList.add('hide-cursor');
-      console.log('🚫 Cursor hidden');
-
-      // Exit inspection mode
-      exitIsolation();
     }
 
     // Mouse drag handlers
@@ -163,7 +155,6 @@ export function useInspectionOverlay({
     // Keyboard handler for ESC/X to exit inspection
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' || e.key === 'x' || e.key === 'X') {
-        console.log('⌨️ ESC/X pressed in inspection mode - exiting');
         handleExit();
       }
     }
@@ -221,16 +212,29 @@ export function useInspectionOverlay({
 
     const root = createRoot(container)
 
-    const overlay = (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 pointer-events-none" style={{ fontFamily: 'Courier New, monospace' }}>
-        {/* No backdrop - scene remains visible */}
+    // Clicking outside the card closes the inspection (backdrop catches the click)
+    const handleBackdropMouseDown = (e) => {
+      if (e.target === e.currentTarget) {
+        handleExit(e);
+      }
+    }
 
-        {/* Retro Card */}
+    const overlay = (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 pointer-events-auto"
+        style={{ fontFamily: UI.font }}
+        onMouseDown={handleBackdropMouseDown}
+      >
+        {/* Transparent backdrop - scene remains visible, clicks outside close the viewer */}
+
+        {/* Lo-fi card */}
         <div
-          className="relative pointer-events-auto bg-gradient-to-br from-gray-200 to-gray-300 shadow-2xl"
+          className="relative pointer-events-auto"
           style={{
-            border: '6px outset #d0d0d0',
-            boxShadow: 'inset 2px 2px 4px rgba(255,255,255,0.8), inset -2px -2px 4px rgba(0,0,0,0.3), 8px 8px 0px rgba(0,0,0,0.4)',
+            background: UI.panel,
+            border: `3px solid ${UI.border}`,
+            borderRadius: '3px',
+            boxShadow: UI.shadow,
             maxWidth: '1000px',
             width: '95%',
             maxHeight: '90vh'
@@ -240,31 +244,33 @@ export function useInspectionOverlay({
           <div
             className="flex items-center justify-between px-2 md:px-3 py-1 md:py-2"
             style={{
-              background: 'linear-gradient(to right, #000080, #1084d0)',
-              borderBottom: '2px solid #000'
+              background: UI.panelAlt,
+              borderBottom: `2px solid ${UI.border}`
             }}
           >
             <div className="flex items-center gap-1 md:gap-2">
-              <div style={{ width: '12px', height: '12px', background: '#c0c0c0', border: '1px solid #000' }} className="md:w-4 md:h-4"></div>
-              <span className="text-white font-bold text-xs md:text-sm" style={{ textShadow: '1px 1px 0px rgba(0,0,0,0.5)' }}>
-                OBJECT_VIEWER.EXE
+              <div style={{ width: '10px', height: '10px', background: UI.accent, border: `1px solid ${UI.border}` }}></div>
+              <span className="font-bold text-xs md:text-sm" style={{ color: UI.text, letterSpacing: '1px' }}>
+                ITEM_VIEWER
               </span>
             </div>
             <button
               onClick={handleExit}
-              className="font-bold text-white hover:bg-red-600 transition-colors"
+              className="font-bold"
               style={{
                 width: '32px', // Larger touch target
                 height: '32px',
-                background: '#c0c0c0',
-                border: '2px outset #d0d0d0',
-                color: '#000',
+                background: UI.panel,
+                border: `2px solid ${UI.text}`,
+                color: UI.text,
                 fontSize: '20px',
                 lineHeight: '1',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = UI.accent; e.currentTarget.style.color = UI.accentText; e.currentTarget.style.borderColor = UI.accent; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = UI.panel; e.currentTarget.style.color = UI.text; e.currentTarget.style.borderColor = UI.text; }}
             >
               ×
             </button>
@@ -277,7 +283,7 @@ export function useInspectionOverlay({
               className="relative flex-1 order-1 md:order-2"
               style={{
                 background: '#000',
-                border: '3px inset #808080',
+                border: `2px solid ${UI.border}`,
                 margin: '8px',
                 marginLeft: '8px',
                 overflow: 'hidden',
@@ -313,42 +319,42 @@ export function useInspectionOverlay({
               <div
                 className="flex-1 p-3 md:p-4 overflow-y-auto"
                 style={{
-                  background: '#fff',
-                  border: '3px inset #808080',
+                  background: UI.panelAlt,
+                  border: `2px solid ${UI.border}`,
                   fontSize: '11px',
                   lineHeight: '1.4',
-                  color: '#4a5568',
+                  color: UI.textDim,
                   width: '100%'
                 }}
               >
-                <div className="font-bold mb-2 pb-2 text-xs md:text-sm" style={{ borderBottom: '2px solid #cbd5e0', color: '#2d3748' }}>
-                  ▸ OBJECT INFO
+                <div className="font-bold mb-2 pb-2 text-xs md:text-sm" style={{ borderBottom: `2px solid ${UI.border}`, color: UI.accent, letterSpacing: '1px' }}>
+                  ▸ ITEM INFO
                 </div>
                 <div className="space-y-1 md:space-y-2 text-xs md:text-sm">
                   <div>
-                    <span className="font-bold" style={{ color: '#2d3748' }}>NAME:</span><br />
-                    <span style={{ color: '#4a5568' }}>{objectInfo.name || 'Unknown Object'}</span>
+                    <span className="font-bold" style={{ color: UI.text }}>NAME:</span><br />
+                    <span style={{ color: UI.textDim }}>{objectInfo.name || 'Unknown Object'}</span>
                   </div>
                   <div>
-                    <span className="font-bold" style={{ color: '#2d3748' }}>TYPE:</span><br />
-                    <span style={{ color: '#4a5568' }}>{objectInfo.type || 'Mesh'}</span>
+                    <span className="font-bold" style={{ color: UI.text }}>TYPE:</span><br />
+                    <span style={{ color: UI.textDim }}>{objectInfo.type || 'Mesh'}</span>
                   </div>
                   <div>
-                    <span className="font-bold" style={{ color: '#2d3748' }}>DESC:</span><br />
-                    <span style={{ color: '#4a5568' }}>{objectInfo.description || 'No description available.'}</span>
+                    <span className="font-bold" style={{ color: UI.text }}>DESC:</span><br />
+                    <span style={{ color: UI.textDim }}>{objectInfo.description || 'No description available.'}</span>
                   </div>
                   {objectInfo.id && (
-                    <div className="mt-2 md:mt-4 pt-2" style={{ borderTop: '1px solid #cbd5e0' }}>
+                    <div className="mt-2 md:mt-4 pt-2" style={{ borderTop: `1px solid ${UI.border}` }}>
                       <a
                         href={`/portfolio/${objectInfo.id}`}
                         className="font-bold"
                         style={{
-                          color: '#0000EE',
+                          color: UI.link,
                           textDecoration: 'underline',
                           cursor: 'pointer'
                         }}
-                        onMouseOver={(e) => e.target.style.color = '#551A8B'}
-                        onMouseOut={(e) => e.target.style.color = '#0000EE'}
+                        onMouseOver={(e) => e.target.style.color = UI.accent}
+                        onMouseOut={(e) => e.target.style.color = UI.link}
                       >
                         ▸ SHOW MORE
                       </a>
@@ -361,12 +367,12 @@ export function useInspectionOverlay({
               <div
                 className="mt-2 px-2 py-1 text-xs"
                 style={{
-                  background: '#c0c0c0',
-                  border: '2px inset #808080',
-                  color: '#2d3748'
+                  background: UI.panelAlt,
+                  border: `2px solid ${UI.border}`,
+                  color: UI.textDim
                 }}
               >
-                <span className="font-bold">STATUS:</span> INSPECTING<AnimatedDots />
+                <span className="font-bold" style={{ color: UI.text }}>STATUS:</span> INSPECTING<AnimatedDots />
               </div>
             </div>
           </div>
@@ -375,14 +381,14 @@ export function useInspectionOverlay({
           <div
             className="px-2 md:px-3 py-1 md:py-2 text-xs flex justify-between items-center"
             style={{
-              background: '#c0c0c0',
-              borderTop: '2px solid #fff',
-              color: '#2d3748'
+              background: UI.panelAlt,
+              borderTop: `2px solid ${UI.border}`,
+              color: UI.textDim
             }}
           >
             <span className="font-bold hidden md:inline">Press [X] or [ESC] to exit</span>
             <span className="font-bold md:hidden">Tap X to exit</span>
-            <span className="font-bold">READY</span>
+            <span className="font-bold" style={{ color: UI.accent }}>READY</span>
           </div>
         </div>
       </div>

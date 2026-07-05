@@ -2,14 +2,22 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { Raycaster, Vector2, Color, Scene, PerspectiveCamera, DirectionalLight, AmbientLight, Vector3, Euler } from 'three'
 import { useInspectionOverlay } from './InspectionOverlay'
-import { useCursorManager } from './CursorManager'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 import { useSceneStore } from '@/store/useSceneStore'
 
-// Custom hook: FPS-style inspection mode with pre-created inspection meshes
+/**
+ * FPS-style inspection mode for a single product mesh.
+ *
+ * Interaction rules:
+ * - Desktop: only clickable while pointer lock is engaged (crosshair aiming).
+ * - Mobile: tap the product directly.
+ * - Only ONE item can be inspected at a time (guarded via the store).
+ * - The store's `inspectedItemId` is the single source of truth; CameraFPS
+ *   subscribes to it to lock/unlock the camera.
+ */
 export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, active = true) {
-  const { camera, scene } = useThree()
+  const { camera } = useThree()
   const isMobile = useIsMobile()
   const raycaster = useRef(new Raycaster())
   const [isHovered, setIsHovered] = useState(false)
@@ -24,7 +32,6 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
   const directionalLight = useRef(null)
   const ambientLight = useRef(null)
 
-  const cameraLocked = useRef(false)
   const savedCameraPosition = useRef(new Vector3())
   const savedCameraRotation = useRef(new Euler())
 
@@ -32,9 +39,6 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
   const hoverColorOrange = useRef(new Color('orange'))
   const hoverColorBlack = useRef(new Color('black'))
   const previousHoverState = useRef(false)
-
-  // Use cursor manager for cursor visibility control
-  useCursorManager(isolated)
 
   if (!inspectionScene.current) {
     inspectionScene.current = new Scene()
@@ -50,12 +54,9 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
     inspectionScene.current.add(ambientLight.current)
   }
 
-  // Restore inspection state if returning from portfolio
+  // Restore inspection state if returning from a portfolio page
   useEffect(() => {
-    // Only restore if we are active (on home page)
     if (active && inspectedItemId && objectInfo?.id === inspectedItemId && !isolated && inspectionMeshRef?.current) {
-      console.log(`🔄 Restoring inspection for item: ${inspectedItemId}`);
-
       // Use stored camera state directly to avoid race conditions with CameraFPS restoration
       const { cameraPosition, cameraRotation } = useSceneStore.getState();
 
@@ -66,12 +67,7 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
       }
 
       if (cameraRotation) {
-        savedCameraRotation.current.set(
-          cameraRotation.x,
-          cameraRotation.y,
-          0,
-          'YXZ'
-        );
+        savedCameraRotation.current.set(cameraRotation.x, cameraRotation.y, 0, 'YXZ');
       } else {
         savedCameraRotation.current.set(
           camera.rotation.x,
@@ -81,7 +77,6 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
         );
       }
 
-      // Setup inspection
       inspectionObject.current = inspectionMeshRef.current
       inspectionCamera.current.position.set(0, 0, 3)
       inspectionObject.current.visible = true
@@ -90,18 +85,6 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
       setIsolated(true)
     }
   }, [inspectedItemId, objectInfo, inspectionMeshRef, camera, isolated, active])
-
-  useEffect(() => {
-    if (isolated) {
-      cameraLocked.current = true
-      // Dispatch event to notify camera controls to lock
-      window.dispatchEvent(new CustomEvent('inspection-mode', { detail: { locked: true } }))
-    } else {
-      cameraLocked.current = false
-      // Dispatch event to notify camera controls to unlock
-      window.dispatchEvent(new CustomEvent('inspection-mode', { detail: { locked: false } }))
-    }
-  }, [isolated, camera])
 
   useEffect(() => {
     // Track touch start for distinguishing tap vs scroll
@@ -116,28 +99,28 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
     };
 
     const handleInteraction = (event) => {
-      // Check if we are on the home page (active) by checking if the canvas wrapper is visible
-      // This is a bit of a hack, but since we don't pass 'active' prop here, we check the DOM
-      const canvasWrapper = document.querySelector('canvas')?.parentElement;
-      const isVisible = canvasWrapper && window.getComputedStyle(canvasWrapper).opacity !== '0';
+      if (!active) return;
 
-      // Ignore interactions originating from the inspection UI overlay or cashier dialogue
+      // Ignore interactions on the inspection UI or the cashier dialogue
       if (event.target.closest('#inspection-ui-overlay') || event.target.closest('#cashier-dialogue-overlay')) {
         return;
       }
 
-      // Also check if cursor is manually visible (e.g. user pressed X)
-      // If cursor is visible, we shouldn't be clicking on 3D objects
-      const isCursorVisible = document.body.getAttribute('data-cursor-manual') === 'true' ||
-        !document.body.classList.contains('hide-cursor');
+      // Rows without a CMS item are plain shelf stock - not clickable.
+      // (Opening an inspection without an item id would leave the store
+      // without `inspectedItemId`, so the camera would never lock = buggy.)
+      if (!objectInfo?.id) return;
 
-      // Only allow interaction if:
-      // 1. We are on the home page (canvas visible)
-      // 2. Cursor is HIDDEN (meaning we are in FPS mode) OR we are on mobile (where cursor concept is different)
-      // 3. Not already in inspection mode
-      if (!isVisible || (isCursorVisible && !isMobile) || isolated) {
-        return;
-      }
+      const store = useSceneStore.getState();
+
+      // Only one inspection at a time; no inspecting during the dialogue
+      if (isolated || store.inspectedItemId || store.showDialogue) return;
+
+      // Desktop: only allow crosshair clicks while pointer lock is engaged (FPS mode)
+      if (!isMobile && !document.pointerLockElement) return;
+
+      // Mobile: taps only work while browsing the shelf line (not during the walk-in)
+      if (isMobile && store.mobilePhase !== 'browse') return;
 
       if (targetRef.current && inspectionMeshRef?.current) {
         let raycastPoint = new Vector2(0, 0)
@@ -147,29 +130,22 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
         if (isMobile && (event.type === 'touchend' || event.type === 'touchstart')) {
           const touch = event.changedTouches?.[0] || event.touches?.[0]
 
-          // Check if this was a tap or a scroll
+          // Distinguish tap from scroll/drag
           if (event.type === 'touchend') {
-            const touchEndX = touch.clientX;
-            const touchEndY = touch.clientY;
-            const touchEndTime = Date.now();
+            const moveX = Math.abs(touch.clientX - touchStartData.x);
+            const moveY = Math.abs(touch.clientY - touchStartData.y);
+            const duration = Date.now() - touchStartData.time;
 
-            const moveX = Math.abs(touchEndX - touchStartData.x);
-            const moveY = Math.abs(touchEndY - touchStartData.y);
-            const duration = touchEndTime - touchStartData.time;
-
-            // If moved more than 10px or took longer than 300ms, it's a scroll/drag, not a tap
             if (moveX > 10 || moveY > 10 || duration > 300) {
               isValidInteraction = false;
-              console.log('👆 Swipe detected, ignoring tap on object');
             }
           }
 
           if (touch && isValidInteraction) {
-            // Convert touch position to normalized device coordinates (-1 to +1)
             raycastPoint.x = (touch.clientX / window.innerWidth) * 2 - 1
             raycastPoint.y = -(touch.clientY / window.innerHeight) * 2 + 1
           } else {
-            return; // Invalid interaction (swipe)
+            return; // Swipe, not a tap
           }
         }
         // Desktop uses center crosshair (0, 0)
@@ -177,7 +153,7 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
         raycaster.current.setFromCamera(raycastPoint, camera)
         const intersects = raycaster.current.intersectObject(targetRef.current, true)
         if (intersects.length > 0) {
-          // IMPORTANT: Save camera state BEFORE changing any state
+          // Save camera state BEFORE changing any state
           savedCameraPosition.current.copy(camera.position)
           savedCameraRotation.current.set(
             camera.rotation.x,
@@ -186,19 +162,13 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
             camera.rotation.order
           )
 
-          // Use the pre-created inspection mesh instead of cloning
           inspectionObject.current = inspectionMeshRef.current
-
-          // Position camera at a fixed distance for consistent viewing
           inspectionCamera.current.position.set(0, 0, 3)
-
-          // Make the inspection mesh visible
           inspectionObject.current.visible = true
-
           inspectionScene.current.add(inspectionObject.current)
+
           setIsolated(true)
 
-          // Save to store
           if (objectInfo?.id) {
             setInspectedItemId(objectInfo.id)
           }
@@ -206,7 +176,6 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
       }
     }
 
-    // Listen for both click (desktop) and touch (mobile) events
     window.addEventListener('click', handleInteraction)
     window.addEventListener('touchstart', handleTouchStart, { passive: true })
     window.addEventListener('touchend', handleInteraction, { passive: true })
@@ -216,7 +185,7 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
       window.removeEventListener('touchstart', handleTouchStart)
       window.removeEventListener('touchend', handleInteraction)
     }
-  }, [targetRef, inspectionMeshRef, isolated, camera, isMobile, objectInfo, setInspectedItemId])
+  }, [targetRef, inspectionMeshRef, isolated, camera, isMobile, objectInfo, setInspectedItemId, active])
 
   const exitIsolation = useCallback(() => {
     if (inspectionObject.current) {
@@ -232,67 +201,48 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
     if (!targetRef?.current) return
 
     if (isolated) {
-      // Lock camera in place
+      // Pin the camera in place while the inspection overlay is open
       camera.position.copy(savedCameraPosition.current)
-      // Properly restore rotation with order
       camera.rotation.set(
         savedCameraRotation.current.x,
         savedCameraRotation.current.y,
         savedCameraRotation.current.z,
         savedCameraRotation.current.order
       )
+    } else if (!isMobile && active && objectInfo?.id) {
+      // Crosshair hover effect (desktop only, only for rows with a real item)
+      const center = new Vector2(0, 0)
+      raycaster.current.setFromCamera(center, camera)
+      const intersects = raycaster.current.intersectObject(targetRef.current, true)
+      const hovering = intersects.length > 0
 
-      // Just render the main scene normally - inspection scene renders in separate canvas
-      // No need to modify opacity or render inspection scene here
-    } else {
-      scene.traverse((obj) => {
-        if (obj.isMesh && obj.material) {
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach((mat) => {
-              mat.transparent = false
-              mat.opacity = 1
-            })
-          } else {
-            obj.material.transparent = false
-            obj.material.opacity = 1
-          }
-        }
-      })
+      // Only update when hover state changes to prevent flickering
+      if (hovering !== previousHoverState.current) {
+        setIsHovered(hovering)
+        previousHoverState.current = hovering
 
-      // Only do hover effect on desktop (not mobile)
-      if (!isMobile) {
-        const center = new Vector2(0, 0)
-        raycaster.current.setFromCamera(center, camera)
-        const intersects = raycaster.current.intersectObject(targetRef.current, true)
-        const hovering = intersects.length > 0
-
-        // Only update if hover state changed to prevent flickering
-        if (hovering !== previousHoverState.current) {
-          setIsHovered(hovering)
-          previousHoverState.current = hovering
-
-          if (targetRef.current.material && !targetRef.current.material._isCloned) {
-            targetRef.current.material = targetRef.current.material.clone()
-            targetRef.current.material._isCloned = true
-          }
-
-          if (targetRef.current.material) {
+        // Works for a single mesh AND for groups (e.g. a row of cans):
+        // applies the emissive glow to every descendant mesh material.
+        targetRef.current.traverse((obj) => {
+          if (obj.isMesh && obj.material?.emissive) {
+            if (!obj.material._isCloned) {
+              obj.material = obj.material.clone()
+              obj.material._isCloned = true
+            }
             if (hovering) {
-              targetRef.current.material.emissive.copy(hoverColorOrange.current)
-              targetRef.current.material.emissiveIntensity = 0.7
+              obj.material.emissive.copy(hoverColorOrange.current)
+              obj.material.emissiveIntensity = 0.7
             } else {
-              targetRef.current.material.emissive.copy(hoverColorBlack.current)
-              targetRef.current.material.emissiveIntensity = 0
+              obj.material.emissive.copy(hoverColorBlack.current)
+              obj.material.emissiveIntensity = 0
             }
           }
-        }
+        })
       }
     }
   })
 
-
-  // Use the separate overlay hook to render the UI
-  // Only show overlay if isolated AND active (on home page)
+  // Render the overlay UI (only when isolated AND on the home page)
   useInspectionOverlay({
     isolated: isolated && active,
     objectInfo,
@@ -302,5 +252,5 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
     inspectionObject
   })
 
-  return { isHovered, isolated, cameraLocked, exitIsolation }
+  return { isHovered, isolated, exitIsolation }
 }

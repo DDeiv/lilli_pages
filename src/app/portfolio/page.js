@@ -1,6 +1,9 @@
 import { getAllItems } from '@/data/portfolioItems'
 import { PortfolioCard } from './PortfolioCard'
 import { BackButton } from './BackButton'
+import { SLUDGE } from '@/lib/theme'
+
+const UI = SLUDGE.ui
 
 // Disable caching for development - always fetch fresh data
 export const dynamic = 'force-dynamic';
@@ -10,23 +13,24 @@ export default async function PortfolioPage() {
   const portfolioItems = await getAllItems()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#008080', padding: '20px' }}>
-      {/* Windows 95 Window */}
+    <div style={{ minHeight: '100vh', background: UI.pageBg, padding: '20px' }}>
+      {/* Lo-fi window */}
       <div
         style={{
           maxWidth: '1200px',
           margin: '0 auto',
-          background: '#c0c0c0',
-          border: '2px outset #ffffff',
-          boxShadow: '4px 4px 10px rgba(0,0,0,0.5)',
+          background: UI.panel,
+          border: `3px solid ${UI.border}`,
+          borderRadius: '3px',
+          boxShadow: UI.shadow,
         }}
       >
         {/* Title Bar */}
         <div
           style={{
-            background: 'linear-gradient(to right, #000080, #1084d0)',
-            padding: '4px 8px',
-            borderBottom: '2px solid #000',
+            background: UI.panelAlt,
+            padding: '6px 10px',
+            borderBottom: `2px solid ${UI.border}`,
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -34,22 +38,22 @@ export default async function PortfolioPage() {
         >
           <div
             style={{
-              width: '16px',
-              height: '16px',
-              background: '#c0c0c0',
-              border: '1px solid #000',
+              width: '10px',
+              height: '10px',
+              background: UI.accent,
+              border: `1px solid ${UI.border}`,
             }}
           />
           <span
             style={{
-              color: 'white',
+              color: UI.text,
               fontSize: '14px',
               fontWeight: 'bold',
-              fontFamily: 'Courier New, monospace',
-              textShadow: '1px 1px 0 rgba(0,0,0,0.5)',
+              fontFamily: UI.font,
+              letterSpacing: '1px',
             }}
           >
-            PORTFOLIO.EXE
+            PORTFOLIO
           </span>
         </div>
 
@@ -57,7 +61,7 @@ export default async function PortfolioPage() {
         <div
           style={{
             padding: '24px',
-            fontFamily: 'Courier New, monospace',
+            fontFamily: UI.font,
           }}
         >
           {/* Header */}
@@ -65,14 +69,14 @@ export default async function PortfolioPage() {
             style={{
               marginBottom: '24px',
               paddingBottom: '12px',
-              borderBottom: '2px solid #808080',
+              borderBottom: `2px solid ${UI.border}`,
             }}
           >
             <h1
               style={{
                 margin: '0 0 8px 0',
                 fontSize: '24px',
-                color: '#000',
+                color: UI.text,
                 fontWeight: 'bold',
               }}
             >
@@ -82,7 +86,7 @@ export default async function PortfolioPage() {
               style={{
                 margin: 0,
                 fontSize: '13px',
-                color: '#4a5568',
+                color: UI.textDim,
               }}
             >
               All projects and work samples
@@ -103,7 +107,7 @@ export default async function PortfolioPage() {
           </div>
 
           {/* Back Button */}
-          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '2px solid #808080' }}>
+          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: `2px solid ${UI.border}` }}>
             <BackButton />
           </div>
         </div>
@@ -111,16 +115,17 @@ export default async function PortfolioPage() {
         {/* Status Bar */}
         <div
           style={{
-            background: '#c0c0c0',
-            padding: '4px 8px',
-            borderTop: '2px solid #fff',
+            background: UI.panelAlt,
+            padding: '4px 10px',
+            borderTop: `2px solid ${UI.border}`,
             fontSize: '11px',
-            color: '#2d3748',
+            color: UI.textDim,
             fontWeight: 'bold',
-            fontFamily: 'Courier New, monospace',
+            fontFamily: UI.font,
+            letterSpacing: '1px',
           }}
         >
-          {portfolioItems.length} items
+          {portfolioItems.length} ITEMS
         </div>
       </div>
     </div>
