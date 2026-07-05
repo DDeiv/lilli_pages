@@ -1,6 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { SLUDGE } from '@/lib/theme'
+
+const UI = SLUDGE.ui
 
 export function PortfolioCard({ item }) {
   return (
@@ -10,18 +13,20 @@ export function PortfolioCard({ item }) {
     >
       <div
         style={{
-          background: 'white',
-          border: '2px inset #808080',
+          background: UI.panelAlt,
+          border: `2px solid ${UI.border}`,
           padding: '16px',
           cursor: 'pointer',
           transition: 'transform 0.1s',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-2px)'
-          e.currentTarget.style.boxShadow = '2px 2px 4px rgba(0,0,0,0.2)'
+          e.currentTarget.style.borderColor = UI.accent
+          e.currentTarget.style.boxShadow = '4px 4px 0px rgba(0,0,0,0.4)'
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)'
+          e.currentTarget.style.borderColor = UI.border
           e.currentTarget.style.boxShadow = 'none'
         }}
       >
@@ -39,7 +44,7 @@ export function PortfolioCard({ item }) {
               style={{
                 margin: '0 0 4px 0',
                 fontSize: '16px',
-                color: '#2d3748',
+                color: UI.text,
                 fontWeight: 'bold',
               }}
             >
@@ -49,7 +54,7 @@ export function PortfolioCard({ item }) {
               style={{
                 margin: 0,
                 fontSize: '12px',
-                color: '#718096',
+                color: UI.textDim,
               }}
             >
               {item.type}
@@ -58,11 +63,11 @@ export function PortfolioCard({ item }) {
           {item.showInScene && (
             <div
               style={{
-                background: '#00aa00',
-                color: 'white',
+                background: UI.accent,
+                color: UI.accentText,
                 fontSize: '10px',
                 padding: '3px 6px',
-                border: '1px solid #008800',
+                border: `1px solid ${UI.border}`,
                 fontWeight: 'bold',
               }}
             >
@@ -76,7 +81,7 @@ export function PortfolioCard({ item }) {
           style={{
             margin: '0 0 12px 0',
             fontSize: '12px',
-            color: '#4a5568',
+            color: UI.textDim,
             lineHeight: '1.4',
           }}
         >
@@ -87,7 +92,7 @@ export function PortfolioCard({ item }) {
         <div
           style={{
             fontSize: '11px',
-            color: '#0000EE',
+            color: UI.link,
             fontWeight: 'bold',
             textDecoration: 'underline',
           }}

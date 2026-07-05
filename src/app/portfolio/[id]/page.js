@@ -3,43 +3,49 @@ import { getItemById } from '@/data/portfolioItems'
 import ImageGallery from './ImageGallery'
 import { ExternalLink } from './ExternalLink'
 import { NavigationButtons } from './NavigationButtons'
+import { SLUDGE } from '@/lib/theme'
+
+const UI = SLUDGE.ui
 
 // Disable caching for development - always fetch fresh data
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function PortfolioDetailPage({ params }) {
-  const item = await getItemById(params.id)
+  // Next.js 16: params is a Promise and must be awaited
+  const { id } = await params
+  const item = await getItemById(id)
 
   if (!item) {
     return (
-      <div style={{ minHeight: '100vh', background: '#008080', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ background: '#c0c0c0', border: '2px outset #ffffff', padding: '40px', textAlign: 'center', fontFamily: 'Courier New, monospace' }}>
-          <h1 style={{ margin: '0 0 16px 0', fontSize: '24px' }}>404 - Item Not Found</h1>
-          <Link href="/portfolio" style={{ color: '#0000EE', textDecoration: 'underline' }}>← Back to Portfolio</Link>
+      <div style={{ minHeight: '100vh', background: UI.pageBg, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: UI.panel, border: `3px solid ${UI.border}`, boxShadow: UI.shadow, padding: '40px', textAlign: 'center', fontFamily: UI.font }}>
+          <h1 style={{ margin: '0 0 16px 0', fontSize: '24px', color: UI.text }}>404 - Item Not Found</h1>
+          <Link href="/portfolio" style={{ color: UI.link, textDecoration: 'underline' }}>← Back to Portfolio</Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#008080', padding: '20px' }}>
-      {/* Windows 95 Window */}
+    <div style={{ minHeight: '100vh', background: UI.pageBg, padding: '20px' }}>
+      {/* Lo-fi window */}
       <div
         style={{
           maxWidth: '1000px',
           margin: '0 auto',
-          background: '#c0c0c0',
-          border: '2px outset #ffffff',
-          boxShadow: '4px 4px 10px rgba(0,0,0,0.5)',
+          background: UI.panel,
+          border: `3px solid ${UI.border}`,
+          borderRadius: '3px',
+          boxShadow: UI.shadow,
         }}
       >
         {/* Title Bar */}
         <div
           style={{
-            background: 'linear-gradient(to right, #000080, #1084d0)',
-            padding: '4px 8px',
-            borderBottom: '2px solid #000',
+            background: UI.panelAlt,
+            padding: '6px 10px',
+            borderBottom: `2px solid ${UI.border}`,
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -47,22 +53,22 @@ export default async function PortfolioDetailPage({ params }) {
         >
           <div
             style={{
-              width: '16px',
-              height: '16px',
-              background: '#c0c0c0',
-              border: '1px solid #000',
+              width: '10px',
+              height: '10px',
+              background: UI.accent,
+              border: `1px solid ${UI.border}`,
             }}
           />
           <span
             style={{
-              color: 'white',
+              color: UI.text,
               fontSize: '14px',
               fontWeight: 'bold',
-              fontFamily: 'Courier New, monospace',
-              textShadow: '1px 1px 0 rgba(0,0,0,0.5)',
+              fontFamily: UI.font,
+              letterSpacing: '1px',
             }}
           >
-            {item.name.toUpperCase()}.EXE
+            {item.name.toUpperCase()}
           </span>
         </div>
 
@@ -70,7 +76,7 @@ export default async function PortfolioDetailPage({ params }) {
         <div
           style={{
             padding: '24px',
-            fontFamily: 'Courier New, monospace',
+            fontFamily: UI.font,
           }}
         >
           {/* Header Section */}
@@ -78,7 +84,7 @@ export default async function PortfolioDetailPage({ params }) {
             style={{
               marginBottom: '24px',
               paddingBottom: '16px',
-              borderBottom: '2px solid #808080',
+              borderBottom: `2px solid ${UI.border}`,
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
@@ -86,7 +92,7 @@ export default async function PortfolioDetailPage({ params }) {
                 style={{
                   margin: 0,
                   fontSize: '24px',
-                  color: '#000',
+                  color: UI.text,
                   fontWeight: 'bold',
                 }}
               >
@@ -95,11 +101,11 @@ export default async function PortfolioDetailPage({ params }) {
               {item.showInScene && (
                 <div
                   style={{
-                    background: '#00aa00',
-                    color: 'white',
+                    background: UI.accent,
+                    color: UI.accentText,
                     fontSize: '11px',
                     padding: '4px 8px',
-                    border: '1px solid #008800',
+                    border: `1px solid ${UI.border}`,
                     fontWeight: 'bold',
                   }}
                 >
@@ -111,7 +117,7 @@ export default async function PortfolioDetailPage({ params }) {
               style={{
                 margin: 0,
                 fontSize: '14px',
-                color: '#4a5568',
+                color: UI.textDim,
                 fontWeight: 'bold',
               }}
             >
@@ -125,8 +131,8 @@ export default async function PortfolioDetailPage({ params }) {
           {/* Description Section */}
           <div
             style={{
-              background: 'white',
-              border: '2px inset #808080',
+              background: UI.panelAlt,
+              border: `2px solid ${UI.border}`,
               padding: '16px',
               marginBottom: '24px',
             }}
@@ -135,10 +141,11 @@ export default async function PortfolioDetailPage({ params }) {
               style={{
                 margin: '0 0 12px 0',
                 fontSize: '14px',
-                color: '#2d3748',
+                color: UI.accent,
                 fontWeight: 'bold',
                 paddingBottom: '8px',
-                borderBottom: '1px solid #cbd5e0',
+                borderBottom: `1px solid ${UI.border}`,
+                letterSpacing: '1px',
               }}
             >
               ▸ DESCRIPTION
@@ -147,7 +154,7 @@ export default async function PortfolioDetailPage({ params }) {
               style={{
                 margin: 0,
                 fontSize: '13px',
-                color: '#4a5568',
+                color: UI.textDim,
                 lineHeight: '1.6',
                 whiteSpace: 'pre-line',
               }}
@@ -166,15 +173,17 @@ export default async function PortfolioDetailPage({ params }) {
         {/* Status Bar */}
         <div
           style={{
-            background: '#c0c0c0',
-            padding: '4px 8px',
-            borderTop: '2px solid #fff',
+            background: UI.panelAlt,
+            padding: '4px 10px',
+            borderTop: `2px solid ${UI.border}`,
             fontSize: '11px',
-            color: '#2d3748',
+            color: UI.textDim,
             fontWeight: 'bold',
+            fontFamily: UI.font,
+            letterSpacing: '1px',
           }}
         >
-          Ready
+          READY
         </div>
       </div>
     </div>

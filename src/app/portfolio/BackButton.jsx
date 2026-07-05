@@ -1,6 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { SLUDGE } from '@/lib/theme'
+
+const UI = SLUDGE.ui
 
 export function BackButton() {
   return (
@@ -8,22 +11,24 @@ export function BackButton() {
       <button
         style={{
           padding: '8px 16px',
-          background: '#c0c0c0',
-          border: '2px outset #d0d0d0',
+          background: UI.panelAlt,
+          border: `2px solid ${UI.text}`,
           cursor: 'pointer',
           fontSize: '13px',
           fontWeight: 'bold',
-          color: '#2d3748',
-          fontFamily: 'Courier New, monospace',
+          color: UI.text,
+          fontFamily: UI.font,
+          letterSpacing: '0.5px',
         }}
-        onMouseDown={(e) => {
-          e.target.style.border = '2px inset #d0d0d0'
-        }}
-        onMouseUp={(e) => {
-          e.target.style.border = '2px outset #d0d0d0'
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = UI.accent
+          e.currentTarget.style.color = UI.accentText
+          e.currentTarget.style.borderColor = UI.accent
         }}
         onMouseLeave={(e) => {
-          e.target.style.border = '2px outset #d0d0d0'
+          e.currentTarget.style.background = UI.panelAlt
+          e.currentTarget.style.color = UI.text
+          e.currentTarget.style.borderColor = UI.text
         }}
       >
         ← Back to Gallery

@@ -1,14 +1,17 @@
 'use client'
 
 import Link from 'next/link'
+import { SLUDGE } from '@/lib/theme'
+
+const UI = SLUDGE.ui
 
 export default function BoringPage() {
   return (
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#c0c0c0',
-        fontFamily: 'Courier New, monospace',
+        backgroundColor: UI.pageBg,
+        fontFamily: UI.font,
         padding: '40px 20px',
       }}
     >
@@ -16,29 +19,32 @@ export default function BoringPage() {
         style={{
           maxWidth: '800px',
           margin: '0 auto',
-          backgroundColor: 'white',
-          border: '2px solid',
-          borderColor: '#808080 #ffffff #ffffff #808080',
+          background: UI.panel,
+          border: `3px solid ${UI.border}`,
+          borderRadius: '3px',
+          boxShadow: UI.shadow,
           padding: '30px',
         }}
       >
         {/* Header */}
         <div
           style={{
-            background: 'linear-gradient(to right, #000080, #1084d0)',
-            color: 'white',
+            background: UI.panelAlt,
+            color: UI.text,
             padding: '8px 12px',
             marginBottom: '20px',
             fontWeight: 'bold',
             fontSize: '16px',
+            border: `2px solid ${UI.border}`,
+            letterSpacing: '1px',
           }}
         >
-          Welcome to the Boring Page
+          THE BORING PAGE
         </div>
 
         {/* Content */}
-        <div style={{ lineHeight: '1.6', fontSize: '14px' }}>
-          <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>
+        <div style={{ lineHeight: '1.6', fontSize: '14px', color: UI.textDim }}>
+          <h1 style={{ fontSize: '24px', marginBottom: '20px', color: UI.text }}>
             Portfolio - Simple Version
           </h1>
 
@@ -47,8 +53,8 @@ export default function BoringPage() {
             without 3D graphics or interactive elements.
           </p>
 
-          <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '15px' }}>
-            About
+          <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '15px', color: UI.accent, letterSpacing: '1px' }}>
+            ▸ ABOUT
           </h2>
           <p style={{ marginBottom: '15px' }}>
             This page is designed for users who prefer a simpler browsing experience
@@ -56,8 +62,8 @@ export default function BoringPage() {
             available here, just in a more traditional format.
           </p>
 
-          <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '15px' }}>
-            Projects
+          <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '15px', color: UI.accent, letterSpacing: '1px' }}>
+            ▸ PROJECTS
           </h2>
           <ul style={{ marginLeft: '20px', marginBottom: '15px' }}>
             <li style={{ marginBottom: '8px' }}>Project 1 - Description coming soon</li>
@@ -65,15 +71,15 @@ export default function BoringPage() {
             <li style={{ marginBottom: '8px' }}>Project 3 - Description coming soon</li>
           </ul>
 
-          <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '15px' }}>
-            Skills
+          <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '15px', color: UI.accent, letterSpacing: '1px' }}>
+            ▸ SKILLS
           </h2>
           <p style={{ marginBottom: '15px' }}>
             JavaScript, React, Next.js, Three.js, Web Development, UI/UX Design
           </p>
 
-          <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '15px' }}>
-            Contact
+          <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '15px', color: UI.accent, letterSpacing: '1px' }}>
+            ▸ CONTACT
           </h2>
           <p style={{ marginBottom: '15px' }}>
             Email: your.email@example.com
@@ -84,23 +90,25 @@ export default function BoringPage() {
             <Link href="/">
               <button
                 style={{
-                  backgroundColor: '#c0c0c0',
-                  border: '2px solid',
-                  borderColor: '#ffffff #000000 #000000 #ffffff',
+                  background: UI.panelAlt,
+                  border: `2px solid ${UI.text}`,
                   padding: '10px 30px',
                   cursor: 'pointer',
-                  fontFamily: 'Courier New, monospace',
+                  fontFamily: UI.font,
                   fontSize: '14px',
                   fontWeight: 'bold',
-                  boxShadow: '1px 1px 0 #808080',
+                  color: UI.text,
+                  letterSpacing: '0.5px',
                 }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.borderColor = '#000000 #ffffff #ffffff #000000'
-                  e.currentTarget.style.boxShadow = 'inset 1px 1px 0 #000000'
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = UI.accent
+                  e.currentTarget.style.color = UI.accentText
+                  e.currentTarget.style.borderColor = UI.accent
                 }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.borderColor = '#ffffff #000000 #000000 #ffffff'
-                  e.currentTarget.style.boxShadow = '1px 1px 0 #808080'
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = UI.panelAlt
+                  e.currentTarget.style.color = UI.text
+                  e.currentTarget.style.borderColor = UI.text
                 }}
               >
                 Back to Interactive Experience
@@ -112,15 +120,16 @@ export default function BoringPage() {
         {/* Status Bar */}
         <div
           style={{
-            backgroundColor: '#c0c0c0',
-            borderTop: '2px solid',
-            borderColor: '#ffffff',
+            background: UI.panelAlt,
+            border: `2px solid ${UI.border}`,
             padding: '8px 12px',
             marginTop: '20px',
             fontSize: '12px',
+            color: UI.textDim,
+            letterSpacing: '1px',
           }}
         >
-          Ready | Simple mode | Fast loading
+          READY | SIMPLE MODE | FAST LOADING
         </div>
       </div>
     </div>

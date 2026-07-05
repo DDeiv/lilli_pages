@@ -21,13 +21,25 @@ export const useSceneStore = create(
       showScrollBlock: false,
       setShowScrollBlock: (show) => set({ showScrollBlock: show }),
 
-      // Camera position and rotation (for restoring state when returning from portfolio)
+      // Camera position, rotation, and scroll offset (for restoring state when returning from portfolio)
       cameraPosition: null,
       cameraRotation: null,
-      setCameraState: (position, rotation) => set({
+      scrollOffset: null,
+      setCameraState: (position, rotation, scrollOffset) => set({
         cameraPosition: position,
         cameraRotation: rotation,
+        scrollOffset: scrollOffset,
       }),
+
+      // ID of the item currently being inspected (persisted to restore UI on return)
+      inspectedItemId: null,
+      setInspectedItemId: (id) => set({ inspectedItemId: id }),
+
+      // Mobile flow phase: 'approach' (swipe-in walk to the cashier)
+      // or 'browse' (camera locked on the shelf line, horizontal swipe).
+      // Not persisted; desktop ignores it.
+      mobilePhase: 'approach',
+      setMobilePhase: (phase) => set({ mobilePhase: phase }),
 
       // Reset all state (useful for testing or "back" button)
       reset: () => set({
@@ -36,6 +48,9 @@ export const useSceneStore = create(
         showScrollBlock: false,
         cameraPosition: null,
         cameraRotation: null,
+        scrollOffset: null,
+        inspectedItemId: null,
+        mobilePhase: 'approach',
       }),
     }),
     {
@@ -45,6 +60,8 @@ export const useSceneStore = create(
       partialize: (state) => ({
         cameraPosition: state.cameraPosition,
         cameraRotation: state.cameraRotation,
+        scrollOffset: state.scrollOffset,
+        inspectedItemId: state.inspectedItemId,
       }),
       // Migrate or clear old data
       migrate: (persistedState, version) => {
@@ -53,6 +70,8 @@ export const useSceneStore = create(
           return {
             cameraPosition: null,
             cameraRotation: null,
+            scrollOffset: null,
+            inspectedItemId: null,
           };
         }
         return persistedState;
