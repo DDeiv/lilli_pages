@@ -10,18 +10,18 @@
  */
 
 export const SLUDGE = {
-  // Atmosphere - STRONG pale warm-green haze; fog is the main depth cue
-  // (shading is a flat 2-band toon, so distance = wash-out, like SL)
-  fog: '#ccc6a4',
+  // Atmosphere - STRONG pale green haze; fog is the main depth cue.
+  // Cooler than before: the previous warm fog + warm ambient stacked into
+  // a yellow cast over everything.
+  fog: '#c2c6a8',
   fogNear: 7,
   fogFar: 42,
 
   // Every element gets a deliberate color (sampled from the SL screenshot)
-  wall: '#b7c2a4',           // interior walls + facade: pale mint-gray
-  ceiling: '#9aa287',        // ceiling: deeper warm green-gray
+  wall: '#adbb9d',           // interior walls + facade: pale mint-gray
+  ceiling: '#93a086',        // ceiling: deeper green-gray
   shelf: '#e8dcc4',          // shelf back panels: off-white (same as boards)
   shelfBoard: '#e8dcc4',     // shelf boards: cream
-  rail: '#e05a4a',           // price rail: red-orange (table red)
   counter: '#f0942c',        // checkout cabinet: hero orange (the hot dog stand)
   counterTop: '#efe4cd',     // checkout top: cream
   floor: '#c4a494',          // OUTSIDE floor: pinkish sun-washed concrete
@@ -37,8 +37,9 @@ export const SLUDGE = {
   // Characters get a pop of color ("weird characters" rule)
   cashierFigure: '#57d996',  // mint-green blob energy (swap if too weird)
 
-  // Products carry the color - screenshot-family saturated pops
-  productAccents: ['#f0942c', '#5fd98f', '#e8656e', '#f2c53d', '#f287b0', '#4fa8d9'],
+  // Products carry the color - SL-family saturated pops
+  // (orange / mint / coral / mustard / pink / sky / grape / acid)
+  productAccents: ['#f28c26', '#45cf8c', '#e85560', '#f2ca3d', '#e578c9', '#3fa4d9', '#9d7ff2', '#b8d936'],
 
   // Outlines stay as they are (intentional) - defined in JaggedEdges defaults.
 

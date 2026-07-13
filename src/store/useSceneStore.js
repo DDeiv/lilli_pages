@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
 // Version for state migration - increment when structure changes
-const STATE_VERSION = 3;
+const STATE_VERSION = 4;
 
 export const useSceneStore = create(
   persist(
@@ -35,11 +35,21 @@ export const useSceneStore = create(
       inspectedItemId: null,
       setInspectedItemId: (id) => set({ inspectedItemId: id }),
 
+      // True once the user has talked to the cashier (picked an option in
+      // the dialogue). Shelf items are not clickable before this.
+      cashierTalked: false,
+      setCashierTalked: (talked) => set({ cashierTalked: talked }),
+
       // Mobile flow phase: 'approach' (swipe-in walk to the cashier)
       // or 'browse' (camera locked on the shelf line, horizontal swipe).
       // Not persisted; desktop ignores it.
       mobilePhase: 'approach',
       setMobilePhase: (phase) => set({ mobilePhase: phase }),
+
+      // Entry doors state - movement is blocked at the threshold until
+      // the sliding animation finishes (set by the Storefront component)
+      doorsOpen: false,
+      setDoorsOpen: (open) => set({ doorsOpen: open }),
 
       // Reset all state (useful for testing or "back" button)
       reset: () => set({
@@ -50,7 +60,9 @@ export const useSceneStore = create(
         cameraRotation: null,
         scrollOffset: null,
         inspectedItemId: null,
+        cashierTalked: false,
         mobilePhase: 'approach',
+        doorsOpen: false,
       }),
     }),
     {
@@ -62,6 +74,7 @@ export const useSceneStore = create(
         cameraRotation: state.cameraRotation,
         scrollOffset: state.scrollOffset,
         inspectedItemId: state.inspectedItemId,
+        cashierTalked: state.cashierTalked,
       }),
       // Migrate or clear old data
       migrate: (persistedState, version) => {
@@ -72,6 +85,7 @@ export const useSceneStore = create(
             cameraRotation: null,
             scrollOffset: null,
             inspectedItemId: null,
+            cashierTalked: false,
           };
         }
         return persistedState;

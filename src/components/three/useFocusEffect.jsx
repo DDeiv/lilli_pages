@@ -5,6 +5,7 @@ import { useInspectionOverlay } from './InspectionOverlay'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 import { useSceneStore } from '@/store/useSceneStore'
+import { SHELF_INTERACT_MAX_Z } from '@/lib/sceneLayout'
 
 /**
  * FPS-style inspection mode for a single product mesh.
@@ -116,6 +117,13 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
       // Only one inspection at a time; no inspecting during the dialogue
       if (isolated || store.inspectedItemId || store.showDialogue) return;
 
+      // Items stay locked until the user has talked to the cashier...
+      if (!store.cashierTalked) return;
+
+      // ...and (desktop) only unlock past the cashier line. Mobile is
+      // already gated by mobilePhase below (browse starts past the line).
+      if (!isMobile && camera.position.z > SHELF_INTERACT_MAX_Z) return;
+
       // Desktop: only allow crosshair clicks while pointer lock is engaged (FPS mode)
       if (!isMobile && !document.pointerLockElement) return;
 
@@ -210,11 +218,17 @@ export function useFocusEffect(targetRef, inspectionMeshRef, objectInfo = {}, ac
         savedCameraRotation.current.order
       )
     } else if (!isMobile && active && objectInfo?.id) {
-      // Crosshair hover effect (desktop only, only for rows with a real item)
-      const center = new Vector2(0, 0)
-      raycaster.current.setFromCamera(center, camera)
-      const intersects = raycaster.current.intersectObject(targetRef.current, true)
-      const hovering = intersects.length > 0
+      // Crosshair hover effect (desktop only, only for rows with a real item,
+      // only once the cashier has been talked to and past the cashier line)
+      const store = useSceneStore.getState()
+      const unlocked = store.cashierTalked && camera.position.z <= SHELF_INTERACT_MAX_Z
+      let hovering = false
+      if (unlocked) {
+        const center = new Vector2(0, 0)
+        raycaster.current.setFromCamera(center, camera)
+        const intersects = raycaster.current.intersectObject(targetRef.current, true)
+        hovering = intersects.length > 0
+      }
 
       // Only update when hover state changes to prevent flickering
       if (hovering !== previousHoverState.current) {

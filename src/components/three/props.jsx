@@ -244,8 +244,9 @@ function seeded(seed) {
 /**
  * A shelf row of repeated props, filling exactly the bounding box of the
  * old solid strip (PRODUCT_STRIP_SIZE) - the layout never shifts.
- * Supermarket logic: one row = one product, repeated, tiny yaw jitter so
- * it feels stocked by a human. The group is the raycast target.
+ * One product type + ONE color per row (color runs were tried and
+ * reverted - looked nice, read confusing). Tiny yaw jitter per prop.
+ * The group is the raycast target.
  */
 export function PropRow({ groupRef, position, type = 'can', color = '#d9b23c', seed = 0, density = 1 }) {
   const dims = PROP_DIMS[type] || PROP_DIMS.can
@@ -261,6 +262,7 @@ export function PropRow({ groupRef, position, type = 'can', color = '#d9b23c', s
     // +0.05: shelf boards are 0.2 thick around the strip's bottom edge -
     // without the epsilon the props sink into the board (z-fighting)
     const baseY = -PRODUCT_STRIP_SIZE.y / 2 + 0.05
+
     return { s, step, count, startZ, baseY }
   }, [dims, density])
 

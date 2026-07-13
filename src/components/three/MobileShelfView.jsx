@@ -9,6 +9,7 @@ import {
   MOBILE_BROWSE,
   ENTRY_SWIPE_DIRECTION,
   CASHIER_LOOK_AT,
+  DOOR_BLOCK_Z,
 } from '@/lib/sceneLayout'
 import gsap from 'gsap'
 
@@ -46,6 +47,16 @@ export function MobileShelfView({ active = true, itemCount = 0 }) {
     () => new CatmullRomCurve3(getEntryPathPoints().map((p) => new Vector3(...p))),
     []
   )
+  // Walk-in t of the door threshold: swipes stop here until the doors open
+  const doorBlockT = useMemo(() => {
+    const samples = 200
+    for (let i = 0; i <= samples; i++) {
+      if (entryCurve.getPoint(i / samples).z < DOOR_BLOCK_Z) {
+        return Math.max(0, (i - 1) / samples)
+      }
+    }
+    return 0
+  }, [entryCurve])
   const entryT = useRef(0)
   const targetEntryT = useRef(0)
   const reachedCashier = useRef(false)
@@ -155,14 +166,20 @@ export function MobileShelfView({ active = true, itemCount = 0 }) {
       if (phase.current === 'approach') {
         // Vertical swipe walks the entry path (direction is a layout constant)
         const diff = (y - touchStart.current.y) * ENTRY_SWIPE_DIRECTION
-        targetEntryT.current = Math.max(0, Math.min(1, targetEntryT.current + diff * 0.0022))
+        const prev = targetEntryT.current
+        let next = Math.max(0, Math.min(1, prev + diff * 0.0038))
+        // Closed doors block the threshold until they finish sliding open
+        if (!useSceneStore.getState().doorsOpen && prev <= doorBlockT && next > doorBlockT) {
+          next = doorBlockT
+        }
+        targetEntryT.current = next
       } else {
         // Horizontal swipe pans along the wall. Facing -X, view-right = -Z:
         // dragging the finger left pulls the next shelves in from the right.
         const diff = touchStart.current.x - x
         targetScrollZ.current = Math.max(
           bounds.min,
-          Math.min(bounds.max, targetScrollZ.current - diff * 0.028)
+          Math.min(bounds.max, targetScrollZ.current - diff * 0.042)
         )
       }
 
@@ -258,6 +275,18 @@ export function MobileShelfView({ active = true, itemCount = 0 }) {
     return () => window.removeEventListener('camera-transition-to-shelves', onCameraTransition)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, camera, setCameraLocked])
+
+  // "Back to front" signs: glide the browse scroll back to the start
+  useEffect(() => {
+    if (!active) return
+    const onQuickReturn = () => {
+      if (phase.current === 'browse') {
+        targetScrollZ.current = MOBILE_BROWSE.startZ
+      }
+    }
+    window.addEventListener('quick-return', onQuickReturn)
+    return () => window.removeEventListener('quick-return', onQuickReturn)
+  }, [active])
 
   // Save camera state periodically (browse phase only)
   useEffect(() => {

@@ -8,15 +8,16 @@ import gsap from 'gsap'
 import { useFocusEffect } from './useFocusEffect'
 import { useSceneStore } from '@/store/useSceneStore'
 import { SLUDGE } from '@/lib/theme'
+import { makeFakeItem } from '@/lib/fakeItems'
 import {
   getProductSlots,
   getShelfUnits,
-  getRails,
   getAisleLights,
   getFacadeExtent,
   getFloorSpecs,
   getStoreShellSpec,
   getAisleSignSpecs,
+  getQuickReturnSigns,
   getDecorShelves,
   getDecorStrips,
   itemIndexForSlot,
@@ -38,6 +39,7 @@ import {
   LightFixture,
   ToonMaterial,
   useCheckerTexture,
+  useTextTexture,
   PROP_TYPES,
 } from './props'
 
@@ -309,6 +311,11 @@ function Storefront() {
     const shouldOpen = camera.position.z < DOOR_OPEN_TRIGGER_Z
     if (shouldOpen !== isOpen.current) {
       isOpen.current = shouldOpen
+      const { setDoorsOpen } = useSceneStore.getState()
+      if (!shouldOpen) {
+        // Closing: the threshold blocks again immediately
+        setDoorsOpen(false)
+      }
       gsap.to(leftDoor.current.position, {
         x: shouldOpen ? leftClosedX - slide : leftClosedX,
         duration: 1.1,
@@ -317,7 +324,11 @@ function Storefront() {
       gsap.to(rightDoor.current.position, {
         x: shouldOpen ? rightClosedX + slide : rightClosedX,
         duration: 1.1,
-        ease: 'power2.inOut'
+        ease: 'power2.inOut',
+        onComplete: () => {
+          // Opening: the threshold unblocks once they're fully open
+          if (shouldOpen) setDoorsOpen(true)
+        }
       })
     }
   })
@@ -356,15 +367,15 @@ function Storefront() {
         bg={SLUDGE.productAccents[0]}
         fg="#141410"
       />
-      {/* Sliding door panels (slide sideways into the walls) */}
+      {/* Sliding door panels: glass-ish (slide sideways into the walls) */}
       <mesh ref={leftDoor} position={[leftClosedX, DOOR_GAP_HEIGHT / 2, 0.05]} scale={[panelW, DOOR_GAP_HEIGHT, 0.15]}>
         <boxGeometry />
-        <ToonMaterial color={SLUDGE.doors} />
+        <ToonMaterial color={SLUDGE.doors} transparent opacity={0.55} />
         <JaggedEdges maxDistance={60} />
       </mesh>
       <mesh ref={rightDoor} position={[rightClosedX, DOOR_GAP_HEIGHT / 2, 0.05]} scale={[panelW, DOOR_GAP_HEIGHT, 0.15]}>
         <boxGeometry />
-        <ToonMaterial color={SLUDGE.doors} />
+        <ToonMaterial color={SLUDGE.doors} transparent opacity={0.55} />
         <JaggedEdges maxDistance={60} />
       </mesh>
     </group>
@@ -372,11 +383,77 @@ function Storefront() {
 }
 
 /**
+ * Clickable "<< BACK TO FRONT" sign: dispatches 'quick-return', which
+ * glides the camera back to the corridor entry (desktop: crosshair click
+ * while pointer-locked; mobile: tap while browsing). Glows on aim.
+ */
+function QuickReturnSign({ spec, isMobile, active }) {
+  const ref = useRef()
+  const { camera } = useThree()
+  const raycaster = useRef(new THREE.Raycaster())
+  const centerVec = useRef(new THREE.Vector2(0, 0))
+  const hovered = useRef(false)
+  const texture = useTextTexture('<< BACK TO FRONT', { bg: SLUDGE.ui.panel, fg: SLUDGE.ui.accent, width: 512, height: 128, font: 'bold 52px "Courier New", monospace' })
+
+  const canInteract = () => {
+    const store = useSceneStore.getState()
+    if (!active || store.showDialogue || store.inspectedItemId || store.cameraLocked) return false
+    if (isMobile) return store.mobilePhase === 'browse'
+    return !!document.pointerLockElement
+  }
+
+  const hitTest = (ndc) => {
+    if (!ref.current) return false
+    raycaster.current.setFromCamera(ndc, camera)
+    const hits = raycaster.current.intersectObject(ref.current, false)
+    return hits.length > 0 && hits[0].distance < 30
+  }
+
+  // Aim glow (desktop)
+  useFrame(() => {
+    if (isMobile || !ref.current) return
+    const hit = canInteract() && hitTest(centerVec.current)
+    if (hit !== hovered.current) {
+      hovered.current = hit
+      if (ref.current.material?.emissive) {
+        ref.current.material.emissive.set(hit ? SLUDGE.ui.accent : '#000000')
+        ref.current.material.emissiveIntensity = hit ? 0.35 : 0
+      }
+    }
+  })
+
+  useEffect(() => {
+    const onClick = (e) => {
+      if (e.target.closest('#inspection-ui-overlay') || e.target.closest('#cashier-dialogue-overlay')) return
+      if (!canInteract()) return
+      const ndc = new THREE.Vector2(0, 0)
+      if (isMobile) {
+        ndc.x = (e.clientX / window.innerWidth) * 2 - 1
+        ndc.y = -(e.clientY / window.innerHeight) * 2 + 1
+      }
+      if (hitTest(ndc)) {
+        window.dispatchEvent(new CustomEvent('quick-return'))
+      }
+    }
+    window.addEventListener('click', onClick)
+    return () => window.removeEventListener('click', onClick)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, active, camera])
+
+  return (
+    <mesh ref={ref} position={spec.position} rotation={spec.rotation}>
+      <planeGeometry args={spec.size} />
+      <ToonMaterial map={texture} />
+    </mesh>
+  )
+}
+
+/**
  * Store shell: perimeter walls + ceiling. Big plain surfaces (no outlines -
  * they'd be noise at this scale; the fog does the depth work).
  */
-function StoreShell({ itemCount }) {
-  const s = useMemo(() => getStoreShellSpec(itemCount), [itemCount])
+function StoreShell({ itemCount, isMobile }) {
+  const s = useMemo(() => getStoreShellSpec(itemCount, isMobile), [itemCount, isMobile])
   const depth = s.zFront - s.zBack
   const width = s.xMax - s.xMin
   const zMid = (s.zFront + s.zBack) / 2
@@ -410,8 +487,8 @@ function StoreShell({ itemCount }) {
  * Floors: checkerboard INSIDE the market (the Sludge Life classic),
  * plain warm concrete outside the doors.
  */
-function Floor({ itemCount }) {
-  const specs = useMemo(() => getFloorSpecs(itemCount), [itemCount])
+function Floor({ itemCount, isMobile }) {
+  const specs = useMemo(() => getFloorSpecs(itemCount, isMobile), [itemCount, isMobile])
   // One checker cell = 2 tiles; tile ~0.7 world units
   const checker = useCheckerTexture(specs.inside.size[0] / 1.4, specs.inside.size[1] / 1.4)
   return (
@@ -436,9 +513,9 @@ export function Model({ sceneItems = [], active = true, isMobile = false, ...pro
   // segments (items only fill the left wall there), hence the flag.
   const slots = useMemo(() => getProductSlots(itemCount, isMobile), [itemCount, isMobile])
   const shelfUnits = useMemo(() => getShelfUnits(itemCount, isMobile), [itemCount, isMobile])
-  const rails = useMemo(() => getRails(itemCount, isMobile), [itemCount, isMobile])
   const lights = useMemo(() => getAisleLights(itemCount, isMobile), [itemCount, isMobile])
   const aisleSigns = useMemo(() => getAisleSignSpecs(itemCount, isMobile), [itemCount, isMobile])
+  const returnSigns = useMemo(() => getQuickReturnSigns(itemCount, isMobile), [itemCount, isMobile])
   const decorShelves = useMemo(() => getDecorShelves(itemCount, isMobile), [itemCount, isMobile])
   const decorStrips = useMemo(() => getDecorStrips(itemCount, isMobile), [itemCount, isMobile])
 
@@ -454,19 +531,22 @@ export function Model({ sceneItems = [], active = true, isMobile = false, ...pro
 
       {/* Product rows: repeated procedural props, one product type per row.
           Type and accent color cycle with an offset per segment so every
-          segment gets a different pairing. On mobile, items live on the
-          left wall only (itemIndexForSlot returns -1 -> plain stock). */}
+          segment gets a different pairing. Rows without a CMS item sell
+          deterministic FAKE products (funny names, inspectable, no
+          portfolio link) - every shelf in the store is stocked. */}
       {slots.map((slot, i) => {
         const itemIdx = itemIndexForSlot(i, isMobile)
         const segment = Math.floor(i / 6)
+        const propType = PROP_TYPES[(i + segment) % PROP_TYPES.length]
+        const realItem = itemIdx >= 0 ? sceneItems[itemIdx] : undefined
         return (
           <ProductRow
             key={`product-${i}`}
-            item={itemIdx >= 0 ? sceneItems[itemIdx] : undefined}
+            item={realItem ?? makeFakeItem(i, propType)}
             position={slot.position}
             active={active}
             color={SLUDGE.productAccents[i % SLUDGE.productAccents.length]}
-            propType={PROP_TYPES[(i + segment) % PROP_TYPES.length]}
+            propType={propType}
             slotIndex={i}
           />
         )
@@ -507,17 +587,9 @@ export function Model({ sceneItems = [], active = true, isMobile = false, ...pro
         </mesh>
       ))}
 
-      {/* Price rails above the left product wall of each segment */}
-      {rails.map((r, i) => (
-        <mesh key={`rail-${i}`} geometry={nodes.Cube021?.geometry} position={r.position} rotation={r.rotation} scale={r.scale}>
-          <ToonMaterial color={SLUDGE.rail} />
-          <JaggedEdges />
-        </mesh>
-      ))}
-
-      {/* Floor + walls + ceiling */}
-      <Floor itemCount={itemCount} />
-      <StoreShell itemCount={itemCount} />
+      {/* Floor + walls + ceiling (back wall sits after THIS platform's last row) */}
+      <Floor itemCount={itemCount} isMobile={isMobile} />
+      <StoreShell itemCount={itemCount} isMobile={isMobile} />
 
       {/* Hanging aisle signs */}
       {aisleSigns.map((sign, i) => (
@@ -529,6 +601,11 @@ export function Model({ sceneItems = [], active = true, isMobile = false, ...pro
           bg={SLUDGE.ui.panel}
           fg={SLUDGE.ui.accent}
         />
+      ))}
+
+      {/* Clickable "back to front" signs in the segment gaps */}
+      {returnSigns.map((spec, i) => (
+        <QuickReturnSign key={`return-sign-${i}`} spec={spec} isMobile={isMobile} active={active} />
       ))}
 
       {/* Checkout dressing */}

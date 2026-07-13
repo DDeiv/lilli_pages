@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Vector3, CatmullRomCurve3, MathUtils } from "three";
 import { useRef, useEffect, useMemo } from "react";
 import { useSceneStore } from "@/store/useSceneStore";
-import { getCameraPathPoints, CASHIER_CAMERA_POS, CASHIER_LOOK_AT, ENTRY_LOOK_AT } from "@/lib/sceneLayout";
+import { getCameraPathPoints, CASHIER_CAMERA_POS, CASHIER_LOOK_AT, ENTRY_LOOK_AT, DOOR_BLOCK_Z } from "@/lib/sceneLayout";
 import gsap from "gsap";
 
 // Bring `target` yaw into the same winding as `from` so GSAP takes the short way around
@@ -42,7 +42,8 @@ export function CameraFPS({ active = true, itemCount = 0 }) {
     getCameraPathPoints(itemCount).map((p) => new Vector3(...p))
   ), [itemCount]);
 
-  // Custom scroll state
+  // Custom scroll state (direct - momentum was tried on desktop and
+  // reverted; the immediate feel was better here. Mobile has momentum.)
   const scrollOffset = useRef(0); // 0 to 1
   const scrollFrozen = useRef(false);
   // Normalize scroll sensitivity to path length so walking speed stays
@@ -53,6 +54,19 @@ export function CameraFPS({ active = true, itemCount = 0 }) {
     const length = cameraPath.getLength();
     scrollSpeed.current = length > 0 ? 0.027 / length : 0.0003;
   }, [cameraPath]);
+
+  // Scroll offset of the door threshold: movement stops here until the
+  // sliding doors have finished opening (like real doors).
+  const doorBlockT = useMemo(() => {
+    const samples = 400;
+    for (let i = 0; i <= samples; i++) {
+      if (cameraPath.getPoint(i / samples).z < DOOR_BLOCK_Z) {
+        return Math.max(0, (i - 1) / samples);
+      }
+    }
+    return 0;
+  }, [cameraPath]);
+
 
   // FPS rotation
   const yaw = useRef(0);
@@ -96,13 +110,21 @@ export function CameraFPS({ active = true, itemCount = 0 }) {
     const onWheel = (e) => {
       if (scrollFrozen.current || cameraLocked.current || !active) return;
 
-      scrollOffset.current += e.deltaY * scrollSpeed.current;
-      scrollOffset.current = Math.max(0, Math.min(1, scrollOffset.current));
+      const prev = scrollOffset.current;
+      let next = Math.max(0, Math.min(1, prev + e.deltaY * scrollSpeed.current));
+
+      // Closed doors block the threshold (only when approaching from
+      // outside - a session restored inside the store is never yanked back)
+      if (!useSceneStore.getState().doorsOpen && prev <= doorBlockT && next > doorBlockT) {
+        next = doorBlockT;
+      }
+
+      scrollOffset.current = next;
     };
 
     window.addEventListener('wheel', onWheel, { passive: true });
     return () => window.removeEventListener('wheel', onWheel);
-  }, [active]);
+  }, [active, doorBlockT]);
 
   // Initial setup / restore when returning from portfolio pages
   useEffect(() => {

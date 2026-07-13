@@ -48,6 +48,9 @@ const RAIL_X = -4.233;
 export const CASHIER_LOOK_AT = [-7, 3, 21.6];
 export const CASHIER_CAMERA_POS = [-4.41, 2.50, 21.57];
 export const CASHIER_INTERACT_DISTANCE = 12;
+// Shelf items are only clickable once the camera is past this z ("cashier line").
+// Small margin so the spot right at the cashier still counts as "past".
+export const SHELF_INTERACT_MAX_Z = CASHIER_CAMERA_POS[2] + 1;
 
 // Tweak these two to taste:
 export const STOREFRONT_Z = 40;        // facade distance from the aisles
@@ -58,6 +61,8 @@ export const DOOR_GAP_WIDTH = 5.6;
 export const DOOR_GAP_HEIGHT = 5.5;
 export const FACADE_HEIGHT = 8;
 export const DOOR_OPEN_TRIGGER_Z = STOREFRONT_Z + 5; // camera z below this -> doors open
+// Movement is blocked here until the doors finish opening (real doors!)
+export const DOOR_BLOCK_Z = STOREFRONT_Z + 1.6;
 
 export const PATH_START = [-4.2, 2.72, STOREFRONT_Z + OUTSIDE_TRAVEL];
 // What the camera looks at on a fresh start (the entrance doors)
@@ -67,12 +72,15 @@ export const ENTRY_LOOK_AT = [DOOR_CENTER_X, 2.75, STOREFRONT_Z];
 
 /**
  * Number of segments to render.
- * Mobile browses ONLY the left wall (3 rows per segment), so it may need
- * more segments than desktop to fit the same item count.
+ * Mobile browses ONLY the left wall (3 rows per segment), so it mirrors
+ * the FULL desktop structure at double length: every desktop unit (left
+ * AND right wall of every segment) becomes one browsed left-wall unit on
+ * the phone, each faced by a decorative right-wall unit. Desktop with 6
+ * units -> phone with 12 units, same total item capacity.
  */
 export function getAisleCount(itemCount, forMobile = false) {
-  const perSegment = forMobile ? 3 : ITEMS_PER_AISLE;
-  return Math.max(MIN_AISLES, Math.ceil((itemCount || 0) / perSegment));
+  const desktop = Math.max(MIN_AISLES, Math.ceil((itemCount || 0) / ITEMS_PER_AISLE));
+  return forMobile ? desktop * 2 : desktop;
 }
 
 export function segmentZ(segmentIndex) {
@@ -262,13 +270,12 @@ export function getFacadeExtent() {
 
 /**
  * Store shell: perimeter walls + ceiling enclosing everything from the
- * facade to just past the last segment. Matches the facade's footprint.
+ * facade to just past the LAST segment of the current platform (mobile
+ * has 2x the segments, so its shell is deeper - but on desktop the back
+ * wall must sit right after the last desktop row, not the mobile one).
  */
-export function getStoreShellSpec(itemCount) {
-  const segments = Math.max(
-    getAisleCount(itemCount, false),
-    getAisleCount(itemCount, true)
-  );
+export function getStoreShellSpec(itemCount, forMobile = false) {
+  const segments = getAisleCount(itemCount, forMobile);
   const { xMin, xMax } = getFacadeExtent();
   return {
     xMin,
@@ -277,6 +284,26 @@ export function getStoreShellSpec(itemCount) {
     zBack: segmentZ(segments - 1) - 20,
     height: FACADE_HEIGHT,
   };
+}
+
+/**
+ * Clickable "back to front" signs, one in each gap between segments
+ * (and after the last one). Desktop: hanging across the corridor,
+ * facing the walking direction. Mobile: mounted on the browsed wall,
+ * facing the locked camera.
+ */
+export function getQuickReturnSigns(itemCount, forMobile = false) {
+  const segments = getAisleCount(itemCount, forMobile);
+  const signs = [];
+  for (let a = 0; a < segments; a++) {
+    const z = segmentZ(a) - 14;
+    if (forMobile) {
+      signs.push({ position: [-9.55, 2.8, z], rotation: [0, Math.PI / 2, 0], size: [2.6, 0.7] });
+    } else {
+      signs.push({ position: [CORRIDOR_X, 4.9, z], rotation: [0, 0, 0], size: [3.4, 0.85] });
+    }
+  }
+  return signs;
 }
 
 /** Hanging "AISLE N" sign specs, one at the front of each segment. */
@@ -295,12 +322,10 @@ export function getAisleSignSpecs(itemCount, forMobile = false) {
 /**
  * Floor planes: checkerboard INSIDE the market only, plain concrete
  * outside. (y slightly below shelf bases to avoid z-fighting.)
+ * Platform-aware like the shell: the checker ends at the back wall.
  */
-export function getFloorSpecs(itemCount) {
-  const segments = Math.max(
-    getAisleCount(itemCount, false),
-    getAisleCount(itemCount, true)
-  );
+export function getFloorSpecs(itemCount, forMobile = false) {
+  const segments = getAisleCount(itemCount, forMobile);
   const { xMin, xMax } = getFacadeExtent();
   const zBack = segmentZ(segments - 1) - 25;
   const zOutside = STOREFRONT_Z + OUTSIDE_TRAVEL + 12;
@@ -329,10 +354,11 @@ export const MOBILE_BROWSE = {
   startZ: 8,       // browse starts at the front of segment 0
 };
 
-// Walk-in swipe direction: -1 = drag UP to walk forward (page-scroll
-// convention, current), +1 = drag DOWN to walk forward. One-line flip.
-// Up-to-walk also avoids down-swipes that iOS turns into pull-to-refresh.
-export const ENTRY_SWIPE_DIRECTION = -1;
+// Walk-in swipe direction: +1 = drag DOWN to walk forward (current,
+// per user preference), -1 = drag UP (page-scroll convention).
+// Note: overscroll-behavior + touch-action already block iOS
+// pull-to-refresh, so down-swipes are safe.
+export const ENTRY_SWIPE_DIRECTION = 1;
 
 /** Clamped scroll range along the wall (no wrap - the store is linear). */
 export function getMobileBrowseBounds(itemCount) {

@@ -34,9 +34,13 @@ export function CashierDialogue() {
   const setShowDialogue = useSceneStore((state) => state.setShowDialogue)
   const setCameraLocked = useSceneStore((state) => state.setCameraLocked)
   const setShowScrollBlock = useSceneStore((state) => state.setShowScrollBlock)
+  const setCashierTalked = useSceneStore((state) => state.setCashierTalked)
 
   const handleInteractiveExperience = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
+
+    // The user has talked to the cashier: shelf items unlock from here on
+    setCashierTalked(true)
 
     // Hide dialogue immediately
     setShowDialogue(false)
@@ -77,6 +81,9 @@ export function CashierDialogue() {
 
   const handleVisitWebsite = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
+    // Counts as talking to the cashier (persisted, so items stay unlocked
+    // when the user comes back from the portfolio pages)
+    setCashierTalked(true)
     // Navigate to portfolio page
     router.push('/portfolio')
   }

@@ -343,7 +343,7 @@ export function useInspectionOverlay({
                     <span className="font-bold" style={{ color: UI.text }}>DESC:</span><br />
                     <span style={{ color: UI.textDim }}>{objectInfo.description || 'No description available.'}</span>
                   </div>
-                  {objectInfo.id && (
+                  {objectInfo.id && !objectInfo.placeholder && (
                     <div className="mt-2 md:mt-4 pt-2" style={{ borderTop: `1px solid ${UI.border}` }}>
                       <a
                         href={`/portfolio/${objectInfo.id}`}
